@@ -422,7 +422,14 @@ export default function LandingPage() {
       {/* 7. Key Features Overview */}
       <section id="features" className={styles.featuresSection}>
         <div className={styles.sectionHeader}>
+          <div className={styles.featureBadge}>
+            <Zap size={14} />
+            <span>Powerful Capabilities</span>
+          </div>
           <h2 className={styles.sectionTitle}>Everything You Need</h2>
+          <p className={styles.sectionSubtitle}>
+            Comprehensive tools designed to streamline every aspect of property management.
+          </p>
         </div>
         <div className={styles.featuresGrid}>
           <FeatureItem icon={<CreditCard />} title="Automated Invoicing" desc="Generate and send recurring invoices automatically." />
