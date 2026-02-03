@@ -139,3 +139,65 @@ CREATE POLICY "Landlords can view inquiries for their properties" ON inquiries
       AND properties.landlord_id = auth.uid()
     )
   );
+
+-- 7. Invoices
+CREATE TABLE invoices (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  landlord_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+  unit_id UUID REFERENCES units(id) ON DELETE SET NULL,
+  tenant_name TEXT NOT NULL,
+  tenant_email TEXT,
+  description TEXT,
+  amount DECIMAL(12,2) NOT NULL,
+  due_date DATE NOT NULL,
+  status TEXT CHECK (status IN ('paid', 'pending', 'overdue')) DEFAULT 'pending',
+  paid_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW())
+);
+
+-- 8. Tasks (To-Do List)
+CREATE TABLE tasks (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  landlord_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+  property_id UUID REFERENCES properties(id) ON DELETE SET NULL,
+  title TEXT NOT NULL,
+  description TEXT,
+  priority TEXT CHECK (priority IN ('high', 'medium', 'low')) DEFAULT 'medium',
+  status TEXT CHECK (status IN ('pending', 'in_progress', 'completed')) DEFAULT 'pending',
+  due_date DATE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()),
+  completed_at TIMESTAMP WITH TIME ZONE
+);
+
+-- 9. Transactions (Finances)
+CREATE TABLE transactions (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  landlord_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+  property_id UUID REFERENCES properties(id) ON DELETE SET NULL,
+  type TEXT CHECK (type IN ('income', 'expense')) NOT NULL,
+  category TEXT NOT NULL, -- 'rent', 'maintenance', 'utilities', 'other'
+  description TEXT,
+  amount DECIMAL(12,2) NOT NULL,
+  date DATE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW())
+);
+
+-- Enable RLS for new tables
+ALTER TABLE invoices ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
+
+-- Policies for Invoices
+CREATE POLICY "Landlords can manage their invoices" ON invoices
+  FOR ALL USING (landlord_id = auth.uid())
+  WITH CHECK (landlord_id = auth.uid());
+
+-- Policies for Tasks
+CREATE POLICY "Landlords can manage their tasks" ON tasks
+  FOR ALL USING (landlord_id = auth.uid())
+  WITH CHECK (landlord_id = auth.uid());
+
+-- Policies for Transactions
+CREATE POLICY "Landlords can manage their transactions" ON transactions
+  FOR ALL USING (landlord_id = auth.uid())
+  WITH CHECK (landlord_id = auth.uid());
