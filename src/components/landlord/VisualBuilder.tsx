@@ -81,14 +81,29 @@ export default function VisualBuilder({ propertyId, initialUnits = [] }: { prope
         return () => container.removeEventListener('wheel', onWheel);
     }, []);
 
+    // Hydration check
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
+
     // --- Drag Logic ---
 
     const handleDragStart = (event: DragStartEvent) => {
         const { active } = event;
         setActiveId(active.id as string);
 
-        const type = active.data.current?.type || (units.find(u => u.id === active.id)?.type);
-        setActiveType(type);
+        let type = active.data.current?.type;
+
+        // Fallback 1: Check if it's an existing unit on canvas
+        if (!type) {
+            type = units.find(u => u.id === active.id)?.type;
+        }
+
+        // Fallback 2: Parse from ID (e.g., 'preset-studio')
+        if (!type && (active.id as string).startsWith('preset-')) {
+            type = (active.id as string).replace('preset-', '');
+        }
+
+        setActiveType(type as UnitType);
     };
 
     const handleDragMove = (event: DragMoveEvent) => {
@@ -258,7 +273,7 @@ export default function VisualBuilder({ propertyId, initialUnits = [] }: { prope
             </div>
 
             {/* DRAG OVERLAY - Follows Mouse (Screen Space) */}
-            {createPortal(
+            {mounted && createPortal(
                 <DragOverlay dropAnimation={null} zIndex={9999}>
                     {activeType ? (
                         <div style={{
@@ -270,7 +285,6 @@ export default function VisualBuilder({ propertyId, initialUnits = [] }: { prope
                             boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold',
                             transformOrigin: 'top left',
-                            // Note: dnd-kit transforms the overlay position, we just size it
                         }}>
                             {unitConfig[activeType].label}
                         </div>
@@ -284,6 +298,7 @@ export default function VisualBuilder({ propertyId, initialUnits = [] }: { prope
 }
 
 function CanvasContent({ units, ghost, activeId }: { units: Unit[], ghost: any, activeId: string | null }) {
+    // ... (inside DraggableUnit function later in file)
     const { setNodeRef } = useDroppable({ id: 'canvas-droppable' });
     const GRID_ROWS = 10;
 
@@ -346,6 +361,7 @@ function SidebarUnit({ type, label, icon }: { type: UnitType, label: string, ico
 function DraggableUnit({ unit, totalRows }: { unit: Unit, totalRows: number }) {
     const { attributes, listeners, setNodeRef } = useDraggable({
         id: unit.id,
+        data: { type: unit.type, isPreset: false }
     });
 
     // Pixel math

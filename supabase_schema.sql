@@ -57,6 +57,23 @@ CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.
 -- Properties: Landlords can view their own properties
 CREATE POLICY "Landlords can view own properties" ON properties FOR ALL USING (landlord_id = auth.uid());
 
+-- Units: Landlords can manage units for their properties
+CREATE POLICY "Landlords can manage units for their properties" ON units
+FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM properties
+      WHERE properties.id = units.property_id
+      AND properties.landlord_id = auth.uid()
+    )
+)
+WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM properties
+      WHERE properties.id = property_id -- Accessing the new value directly in check
+      AND properties.landlord_id = auth.uid()
+    )
+);
+
 -- Trigger to create profile on signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
@@ -74,3 +91,51 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- 5. Maintenance Requests (Tickets)
+CREATE TABLE maintenance_requests (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  property_id UUID REFERENCES properties(id) ON DELETE CASCADE NOT NULL,
+  unit_id UUID REFERENCES units(id) ON DELETE SET NULL,
+  tenant_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  title TEXT NOT NULL,
+  description TEXT,
+  priority TEXT CHECK (priority IN ('critical', 'warning', 'info')) DEFAULT 'info',
+  status TEXT CHECK (status IN ('open', 'in_progress', 'resolved')) DEFAULT 'open',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW())
+);
+
+-- 6. Inquiries
+CREATE TABLE inquiries (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  property_id UUID REFERENCES properties(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  message TEXT NOT NULL,
+  status TEXT CHECK (status IN ('new', 'read', 'archived')) DEFAULT 'new',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW())
+);
+
+-- Enable RLS
+ALTER TABLE maintenance_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE inquiries ENABLE ROW LEVEL SECURITY;
+
+-- Policies for Maintenance (Landlord View)
+CREATE POLICY "Landlords can view requests for their properties" ON maintenance_requests
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM properties
+      WHERE properties.id = maintenance_requests.property_id
+      AND properties.landlord_id = auth.uid()
+    )
+  );
+
+-- Policies for Inquiries (Landlord View)
+CREATE POLICY "Landlords can view inquiries for their properties" ON inquiries
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM properties
+      WHERE properties.id = inquiries.property_id
+      AND properties.landlord_id = auth.uid()
+    )
+  );
