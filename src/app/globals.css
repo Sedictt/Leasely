@@ -1,41 +1,52 @@
 :root {
+  /* Slate-based Foundation */
   --background: #f8fafc;
-  /* Slate 50 - Very light/clean */
   --foreground: #0f172a;
-
   --muted-foreground: #64748b;
+  --border: #e2e8f0;
 
-  /* Vibrant modern palette */
-  --primary: #6366f1;
-  /* Indigo 500 - Brighter */
-  --primary-hover: #4f46e5;
-  --primary-glow: rgba(99, 102, 241, 0.4);
+  /* Premium Brand Colors - Deep Indigo & Vibrant Violet */
+  --primary: #4338ca;
+  /* Indigo 700 */
+  --primary-hover: #3730a3;
+  /* Indigo 800 */
+  --primary-light: #6366f1;
+  /* Indigo 500 */
+  --primary-glow: rgba(99, 102, 241, 0.25);
 
-  --secondary: #ec4899;
-  /* Pink 500 */
+  --secondary: #0f172a;
+  /* Slate 900 */
+  --secondary-hover: #1e293b;
+  /* Slate 800 */
+
   --accent: #8b5cf6;
   /* Violet 500 */
+  --accent-glow: rgba(139, 92, 246, 0.3);
 
-  --surface: rgba(255, 255, 255, 0.75);
-  --surface-border: rgba(255, 255, 255, 0.8);
-  --surface-hover: rgba(255, 255, 255, 0.9);
-
+  /* Functional Colors */
   --success: #10b981;
   --warning: #f59e0b;
   --danger: #ef4444;
 
-  --font-sans: var(--font-rethink), system-ui, sans-serif;
-  --font-heading: var(--font-geist-sans), system-ui, sans-serif;
+  /* Glassmorphism & Surfaces */
+  --glass-surface: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.5);
+  --surface-raised: #ffffff;
+
+  /* Typography */
+  --font-sans: var(--font-rethink), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-heading: var(--font-geist-sans), var(--font-rethink), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: inherit;
+  font-family: var(--font-sans);
   margin: 0;
   padding: 0;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 h1,
@@ -44,7 +55,14 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: var(--font-geist-sans), var(--font-rethink), system-ui, sans-serif;
+  font-family: var(--font-heading);
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+  margin: 0;
+}
+
+button {
+  font-family: var(--font-sans);
 }
 
 * {
@@ -54,86 +72,26 @@ h6 {
 a {
   color: inherit;
   text-decoration: none;
+  transition: color 0.2s ease;
 }
 
-/* Utilities */
+/* Base Utilities */
 .container {
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
   padding: 0 1.5rem;
 }
 
-.title {
-  font-size: 2.5rem;
-  font-weight: 800;
-  letter-spacing: -0.05em;
-  color: var(--foreground);
-  margin-bottom: 1rem;
-}
-
-.subtitle {
-  font-size: 1.125rem;
-  color: var(--muted-foreground);
-  line-height: 1.6;
-}
-
-/* Glassmorphism - Light Mode Version */
+/* Glass Utility */
 .glass {
-  background: var(--surface);
+  background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
-.glass-panel {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  border-radius: 16px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
-}
-
-/* Buttons */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  cursor: pointer;
-  border: none;
-  font-size: 0.95rem;
-}
-
-.btn-primary {
-  background: var(--primary);
-  color: white;
-  box-shadow: 0 4px 10px var(--primary-glow);
-}
-
-.btn-primary:hover {
-  background: var(--primary-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 15px var(--primary-glow);
-}
-
-.btn-ghost {
-  background: transparent;
-  color: var(--muted-foreground);
-}
-
-.btn-ghost:hover {
-  background: rgba(0, 0, 0, 0.05);
-  /* Darken slightly on hover */
-  color: var(--foreground);
-}
-
-/* Grid Layouts */
-.grid-layout {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem;
+/* Section Spacing */
+section {
+  position: relative;
+  overflow: hidden;
 }

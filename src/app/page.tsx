@@ -16,12 +16,26 @@ import {
   MapPin,
   ChevronRight,
   Menu,
-  X
+  X,
+  LayoutGrid,
+  Map,
+  BarChart3,
+  Sparkles,
+  ShieldCheck,
+  CheckCircle2,
+  Smartphone,
+  Home as HomeIcon,
+  Key,
+  Zap,
+  Clock,
+  CreditCard,
+  Grid,
+  Users
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
 
-export default function Home() {
+export default function LandingPage() {
   const [user, setUser] = useState<User | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -53,9 +67,9 @@ export default function Home() {
           </div>
 
           <nav className={styles.nav}>
-            <a href="#about" className={styles.navLink}>About</a>
-            <a href="#catalog" className={styles.navLink}>Properties</a>
-            <a href="#how-it-works" className={styles.navLink}>How It Works</a>
+            <a href="#browse" className={styles.navLink}>Browse Units</a>
+            <a href="#landlord" className={styles.navLink}>For Landlords</a>
+            <a href="#features" className={styles.navLink}>Features</a>
             <a href="#contact" className={styles.navLink}>Contact</a>
           </nav>
 
@@ -85,10 +99,10 @@ export default function Home() {
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className={styles.mobileMenu}>
-            <a href="#about" className={styles.mobileNavLink}>About</a>
-            <a href="#catalog" className={styles.mobileNavLink}>Properties</a>
-            <a href="#how-it-works" className={styles.mobileNavLink}>How It Works</a>
-            <a href="#contact" className={styles.mobileNavLink}>Contact</a>
+            <a href="#browse" className={styles.mobileNavLink} onClick={() => setMobileMenuOpen(false)}>Browse Units</a>
+            <a href="#landlord" className={styles.mobileNavLink} onClick={() => setMobileMenuOpen(false)}>For Landlords</a>
+            <a href="#features" className={styles.mobileNavLink} onClick={() => setMobileMenuOpen(false)}>Features</a>
+            <a href="#contact" className={styles.mobileNavLink} onClick={() => setMobileMenuOpen(false)}>Contact</a>
             {!user ? (
               <>
                 <Link href="/login" className={styles.mobileNavLink}>Sign In</Link>
@@ -105,286 +119,386 @@ export default function Home() {
         )}
       </header>
 
-      {/* Hero Section */}
+      {/* 1. Hero Section */}
       <section className={styles.heroSection}>
+        <div className={styles.heroBackground}>
+          <img
+            src="https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2670&auto=format&fit=crop"
+            alt="Futuristic Building"
+            className={styles.heroBgImage}
+          />
+          <div className={styles.heroOverlay}></div>
+        </div>
+
         <div className={styles.heroContent}>
           <div className={styles.heroText}>
+            <div className={styles.heroBadge}>
+              <Sparkles size={14} />
+              <span>The Future of Living</span>
+            </div>
             <h1 className={styles.heroTitle}>
-              Property<br />
-              <span>Management</span><br />
-              Made Simple
+              Find your perfect space.<br />
+              <span>Manage with ease.</span>
             </h1>
             <p className={styles.heroSubtitle}>
-              Rent, manage, and grow your property portfolio—
-              from single units to entire buildings.
+              The all-in-one platform connecting tenants with their dream homes and empowering landlords with powerful management tools.
             </p>
-            <Link href={landlordCtaHref} className={styles.heroCta}>
-              Start Your Journey
+            <div className={styles.heroCtas}>
+              <Link href={tenantCtaHref} className={`${styles.heroCta} ${styles.primary}`}>
+                <Search size={18} />
+                Find a Place
+              </Link>
+              <Link href={landlordCtaHref} className={`${styles.heroCta} ${styles.secondary}`}>
+                <Building2 size={18} />
+                Manage Property
+              </Link>
+            </div>
+            <div className={styles.heroTrust}>
+              <div className={styles.trustAvatars}>
+                {[1, 2, 3].map(i => (
+                  <div key={i} className={styles.trustAvatar}>
+                    <img src={`https://i.pravatar.cc/100?img=${i + 10}`} alt="User" />
+                  </div>
+                ))}
+              </div>
+              <div className={styles.trustText}>
+                <div className={styles.trustStars}>
+                  <Star size={14} fill="#fbbf24" stroke="#fbbf24" />
+                  <Star size={14} fill="#fbbf24" stroke="#fbbf24" />
+                  <Star size={14} fill="#fbbf24" stroke="#fbbf24" />
+                  <Star size={14} fill="#fbbf24" stroke="#fbbf24" />
+                  <Star size={14} fill="#fbbf24" stroke="#fbbf24" />
+                </div>
+                <p>Trusted by 10,000+ users</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 2. Audience Split Section */}
+      <section className={styles.audienceSection}>
+        <div className={styles.audienceContainer}>
+          <div className={`${styles.audienceCard} ${styles.tenantCard}`}>
+            <div className={styles.cardBgImage}>
+              <img src="https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?q=80&w=1000&auto=format&fit=crop" alt="Tenant Living" />
+            </div>
+            <div className={styles.cardContent}>
+              <div className={styles.cardIcon}>
+                <HomeIcon size={32} />
+              </div>
+              <h3>For Tenants</h3>
+              <ul>
+                <li><Search size={16} /> Search by location & price</li>
+                <li><FileCheck size={16} /> View amenities & rules</li>
+                <li><CreditCard size={16} /> Transparent pricing</li>
+              </ul>
+              <Link href={tenantCtaHref} className={styles.cardLink}>
+                Find a Home <ArrowRight size={16} />
+              </Link>
+            </div>
+          </div>
+          <div className={`${styles.audienceCard} ${styles.landlordCard}`}>
+            <div className={styles.cardBgImage}>
+              <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1000&auto=format&fit=crop" alt="Property Management" />
+            </div>
+            <div className={styles.cardContent}>
+              <div className={styles.cardIcon}>
+                <Building2 size={32} />
+              </div>
+              <h3>For Landlords</h3>
+              <ul>
+                <li><LayoutGrid size={16} /> Centralized management</li>
+                <li><BarChart3 size={16} /> Automated financial tracking</li>
+                <li><Users size={16} /> Tenant analytics</li>
+              </ul>
+              <Link href={landlordCtaHref} className={styles.cardLink}>
+                Start Managing <ArrowRight size={16} />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. Property Discovery Section (Tenant Focused) */}
+      <section id="browse" className={styles.browseSection}>
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>Discover Your Next Home</h2>
+          <p className={styles.sectionSubtitle}>Browse verified dorms, apartments, and boarding houses.</p>
+        </div>
+
+        {/* Mock Search Bar */}
+        <div className={styles.searchContainer}>
+          <div className={styles.searchBar}>
+            <div className={styles.searchInput}>
+              <MapPin size={18} className={styles.searchIcon} />
+              <input type="text" placeholder="Enter city, barangay, or area..." />
+            </div>
+            <div className={styles.separator}></div>
+            <div className={styles.searchInput}>
+              <DollarSignIcon />
+              <select>
+                <option>Price Range</option>
+                <option>₱2k - ₱5k</option>
+                <option>₱5k - ₱10k</option>
+                <option>₱10k+</option>
+              </select>
+            </div>
+            <button className={styles.searchBtn}>Search</button>
+          </div>
+        </div>
+
+        <div className={styles.listingsGrid}>
+          <ListingCard
+            image="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=500&q=80"
+            title="Modern Studio in Valenzuela"
+            location="Karuhatan, Valenzuela City"
+            price="₱8,500"
+            type="Apartment"
+            tags={["WiFi", "AC"]}
+          />
+          <ListingCard
+            image="https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=500&q=80"
+            title="Cozy Dorm near OLFU"
+            location="Marulas, Valenzuela City"
+            price="₱3,500"
+            type="Dorm"
+            tags={["Females Only", "Study Hall"]}
+          />
+          <ListingCard
+            image="https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=500&q=80"
+            title="Spacious 2BR Unit"
+            location="Malanday, Valenzuela City"
+            price="₱12,000"
+            type="Apartment"
+            tags={["Parking", "Pet Friendly"]}
+          />
+        </div>
+        <div className={styles.centerCta}>
+          <Link href={tenantCtaHref} className={styles.secondaryBtn}>Browse Available Units</Link>
+        </div>
+      </section>
+
+      {/* 4. Landlord Command Center */}
+      <section id="landlord" className={styles.commandCenterSection}>
+        <div className={styles.commandCenterContent}>
+          <div className={styles.cmdInternal}>
+            <div className={styles.cmdText}>
+              <div className={styles.cmdBadge}>
+                <ShieldCheck size={14} />
+                <span>Pro Management Suite</span>
+              </div>
+              <h2 className={styles.cmdTitle}>
+                The Landlord <br />
+                <span className={styles.cmdTitleHighlight}>Command Center</span>
+              </h2>
+              <p className={styles.cmdDesc}>
+                Total control at your fingertips. From automated billing to maintenance triage,
+                manage your entire portfolio from a single, powerful dashboard.
+              </p>
+
+              <div className={styles.cmdStatsRow}>
+                <div className={styles.cmdStatItem}>
+                  <span className={styles.cmdStatVal}>98%</span>
+                  <span className={styles.cmdStatLabel}>On-time Payments</span>
+                </div>
+                <div className={styles.cmdDivider}></div>
+                <div className={styles.cmdStatItem}>
+                  <span className={styles.cmdStatVal}>24/7</span>
+                  <span className={styles.cmdStatLabel}>System Uptime</span>
+                </div>
+                <div className={styles.cmdDivider}></div>
+                <div className={styles.cmdStatItem}>
+                  <span className={styles.cmdStatVal}>0</span>
+                  <span className={styles.cmdStatLabel}>Paperwork</span>
+                </div>
+              </div>
+
+              <Link href={landlordCtaHref} className={styles.cmdBtn}>
+                Launch Dashboard <ChevronRight size={18} />
+              </Link>
+            </div>
+
+            <div className={styles.cmdVisual}>
+              <div className={styles.dashboardMockup}>
+                {/* Mockup Header */}
+                <div className={styles.dashHeader}>
+                  <div className={styles.dashDots}>
+                    <span></span><span></span><span></span>
+                  </div>
+                  <div className={styles.dashSearch}></div>
+                  <div className={styles.dashProfile}></div>
+                </div>
+
+                {/* Mockup Content Grid */}
+                <div className={styles.dashGrid}>
+                  <div className={styles.dashSidebar}>
+                    <div className={styles.dashLine}></div>
+                    <div className={styles.dashLine}></div>
+                    <div className={styles.dashLine} style={{ width: '60%' }}></div>
+                  </div>
+                  <div className={styles.dashMain}>
+                    <div className={styles.dashHeroCard}>
+                      <div className={styles.dashGraph}>
+                        <div className={styles.graphBar} style={{ height: '40%' }}></div>
+                        <div className={styles.graphBar} style={{ height: '70%' }}></div>
+                        <div className={styles.graphBar} style={{ height: '50%' }}></div>
+                        <div className={styles.graphBar} style={{ height: '85%' }}></div>
+                        <div className={styles.graphBar} style={{ height: '60%' }}></div>
+                      </div>
+                    </div>
+                    <div className={styles.dashRow}>
+                      <div className={styles.dashCardSmall}></div>
+                      <div className={styles.dashCardSmall}></div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Floating Elements */}
+                <div className={`${styles.floatCard} ${styles.floatRent}`}>
+                  <div className={styles.floatIcon}><CheckCircle2 size={16} /></div>
+                  <div className={styles.floatText}>
+                    <span>Rent Received</span>
+                    <strong>₱15,000.00</strong>
+                  </div>
+                </div>
+
+                <div className={`${styles.floatCard} ${styles.floatTenant}`}>
+                  <div className={styles.floatAvatar}></div>
+                  <div className={styles.floatText}>
+                    <span>New Tenant</span>
+                    <strong>Sarah J.</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 6. AI Insights Section */}
+      {/* 6. AI Insights Section */}
+      <section className={styles.aiSection}>
+        <div className={styles.aiContainerSimple}>
+          <div className={styles.sectionHeader}>
+            <div className={styles.aiBadgeSimple}>
+              <Sparkles size={14} />
+              <span>Smart Assist</span>
+            </div>
+            <h2 className={styles.sectionTitle}>AI-Powered Intelligence</h2>
+            <p className={styles.sectionSubtitle}>
+              Data-driven insights to help you manage smarter, not harder.
+            </p>
+          </div>
+
+          <div className={styles.aiGridSimple}>
+            <div className={styles.aiCardSimple}>
+              <div className={`${styles.aiIconSimple} ${styles.iconPurple}`}>
+                <BarChart3 size={24} />
+              </div>
+              <h3>Predictive Trends</h3>
+              <p>Forecast occupancy rates and identify churn risks before they happen.</p>
+            </div>
+
+            <div className={styles.aiCardSimple}>
+              <div className={`${styles.aiIconSimple} ${styles.iconBlue}`}>
+                <ShieldCheck size={24} />
+              </div>
+              <h3>Risk Assessment</h3>
+              <p>Evaluate tenant reliability based on payment history and behavior patterns.</p>
+            </div>
+
+            <div className={styles.aiCardSimple}>
+              <div className={`${styles.aiIconSimple} ${styles.iconOrange}`}>
+                <Zap size={24} />
+              </div>
+              <h3>Smart Triage</h3>
+              <p>Prioritize maintenance requests automatically based on urgency severity.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 7. Key Features Overview */}
+      <section id="features" className={styles.featuresSection}>
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>Everything You Need</h2>
+        </div>
+        <div className={styles.featuresGrid}>
+          <FeatureItem icon={<CreditCard />} title="Automated Invoicing" desc="Generate and send recurring invoices automatically." />
+          <FeatureItem icon={<ClipboardList />} title="Maintenance Tracking" desc="Track issues from report to resolution." />
+          <FeatureItem icon={<Users />} title="Tenant Directory" desc="Keep all lease and contact details in one secure place." />
+          <FeatureItem icon={<BarChart3 />} title="Financial Analytics" desc="Visual reports on revenue, expenses, and growth." />
+          <FeatureItem icon={<Clock />} title="Real-time Alerts" desc="Get notified instantly about payments or emergencies." />
+          <FeatureItem icon={<Smartphone />} title="Mobile First" desc="Manage everything from your phone, anywhere." />
+        </div>
+      </section>
+
+      {/* 8. Trust & Legitimacy */}
+      <section className={styles.trustSection}>
+        <div className={styles.trustContent}>
+          <div className={styles.trustBadge}>
+            <ShieldCheck size={32} />
+          </div>
+          <h2>Trusted & Compliant</h2>
+          <p>Designed for legal dorms, apartments, and boarding houses.</p>
+          <p className={styles.trustLocation}>
+            <MapPin size={16} /> Primarily serving Barangay Marulas, Valenzuela City
+          </p>
+          <div className={styles.trustLogos}>
+            <span>Data Privacy Secured</span>
+            <span>•</span>
+            <span>Verified Listings</span>
+            <span>•</span>
+            <span>24/7 Support</span>
+          </div>
+        </div>
+      </section>
+
+      {/* 9. How It Works */}
+      <section className={styles.stepsSection}>
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>How It Works</h2>
+        </div>
+
+        <div className={styles.stepsContainer}>
+          <div className={styles.stepsColumn}>
+            <h3>For Tenants</h3>
+            <div className={styles.stepList}>
+              <Step number={1} title="Search" desc="Filter by location, price, and type." />
+              <Step number={2} title="View Details" desc="Check amenities, photos, and rules." />
+              <Step number={3} title="Move In" desc="Connect with landlords and sign leases." />
+            </div>
+          </div>
+          <div className={styles.divider}></div>
+          <div className={styles.stepsColumn}>
+            <h3>For Landlords</h3>
+            <div className={styles.stepList}>
+              <Step number={1} title="Register" desc="Create your landlord account." />
+              <Step number={2} title="Blueprint" desc="map out your units visually." />
+              <Step number={3} title="Manage" desc="Automate payments and tenants." />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 10. Call to Action */}
+      <section className={styles.ctaSection}>
+        <div className={styles.ctaContent}>
+          <h2>Whether you're renting out or moving in — start here.</h2>
+          <div className={styles.customCtaButtons}>
+            <Link href={tenantCtaHref} className={styles.ctaBtnLight}>
+              Find Your Next Home
+            </Link>
+            <Link href={landlordCtaHref} className={styles.ctaBtnOutline}>
+              List & Manage Property
             </Link>
           </div>
-          <div className={styles.heroImage}>
-            <div className={styles.heroImageBg}></div>
-            <img
-              src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80"
-              alt="Modern Building"
-            />
-          </div>
         </div>
       </section>
 
-      {/* About / Stats Section */}
-      <section id="about" className={styles.aboutSection}>
-        <div className={styles.aboutContent}>
-          <div className={styles.aboutText}>
-            <h2 className={styles.sectionTitle}>About Us</h2>
-            <p className={styles.aboutDescription}>
-              We are a property management platform that helps landlords
-              find the perfect tenants and manage their properties efficiently.
-              Our comprehensive suite of tools handles everything from
-              tenant screening to rent collection.
-            </p>
-          </div>
-          <div className={styles.statsGrid}>
-            <div className={styles.statCard}>
-              <span className={styles.statNumber}>10+</span>
-              <span className={styles.statLabel}>Years Experience</span>
-            </div>
-            <div className={styles.statCard}>
-              <span className={styles.statNumber}>1000+</span>
-              <span className={styles.statLabel}>Happy Clients</span>
-            </div>
-            <div className={styles.statCard}>
-              <span className={styles.statNumber}>4000+</span>
-              <span className={styles.statLabel}>Properties Managed</span>
-            </div>
-            <div className={styles.statCard}>
-              <span className={styles.statNumber}>95%</span>
-              <span className={styles.statLabel}>Client Satisfaction</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Partners */}
-      <section className={styles.partnersSection}>
-        <div className={styles.partnersInner}>
-          <span className={styles.partnerLogo}>🏢 PropertyHub</span>
-          <span className={styles.partnerLogo}>🏗️ BuildCorp</span>
-          <span className={styles.partnerLogo}>🏠 HomeFirst</span>
-          <span className={styles.partnerLogo}>🏬 RealtyPro</span>
-          <span className={styles.partnerLogo}>🏘️ EstateMax</span>
-        </div>
-      </section>
-
-      {/* Property Catalog */}
-      <section id="catalog" className={styles.catalogSection}>
-        <div className={styles.catalogHeader}>
-          <div>
-            <h2 className={styles.sectionTitle}>Property Catalog</h2>
-            <p className={styles.sectionSubtitle}>
-              Wide selection of properties for your business needs
-            </p>
-          </div>
-        </div>
-        <div className={styles.catalogGrid}>
-          <div className={styles.catalogCard}>
-            <div className={styles.catalogImage}>
-              <img
-                src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&q=80"
-                alt="Office Space"
-              />
-            </div>
-            <div className={styles.catalogInfo}>
-              <h3>Office Spaces</h3>
-              <p>4000+ available</p>
-            </div>
-          </div>
-          <div className={styles.catalogCard}>
-            <div className={styles.catalogImage}>
-              <img
-                src="https://images.unsplash.com/photo-1553877522-43269d4ea984?w=400&q=80"
-                alt="Warehouse"
-              />
-            </div>
-            <div className={styles.catalogInfo}>
-              <h3>Warehouses</h3>
-              <p>1000+ available</p>
-            </div>
-          </div>
-          <div className={styles.catalogCard}>
-            <div className={styles.catalogImage}>
-              <img
-                src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&q=80"
-                alt="Residential"
-              />
-            </div>
-            <div className={styles.catalogInfo}>
-              <h3>Residential Units</h3>
-              <p>2000+ available</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section id="how-it-works" className={styles.howSection}>
-        <div className={styles.howInner}>
-          <div className={styles.howImage}>
-            <img
-              src="https://images.unsplash.com/photo-1560520031-3a4dc4e9de0c?w=600&q=80"
-              alt="Consultation"
-            />
-            <div className={styles.consultBadge}>
-              Free Consultation
-            </div>
-          </div>
-          <div className={styles.howContent}>
-            <h2 className={styles.sectionTitle}>How We Work</h2>
-            <p className={styles.howDescription}>
-              We&apos;ve made the property management process simple and transparent.
-            </p>
-            <div className={styles.howSteps}>
-              <div className={styles.howStep}>
-                <div className={styles.stepIcon}>
-                  <ClipboardList size={20} />
-                </div>
-                <div className={styles.stepContent}>
-                  <h4>Consultation & Analysis</h4>
-                  <p>We learn about your needs and determine the best property type for you.</p>
-                </div>
-              </div>
-              <div className={styles.howStep}>
-                <div className={styles.stepIcon}>
-                  <Search size={20} />
-                </div>
-                <div className={styles.stepContent}>
-                  <h4>Property Search</h4>
-                  <p>We offer only verified properties matching your budget and goals.</p>
-                </div>
-              </div>
-              <div className={styles.howStep}>
-                <div className={styles.stepIcon}>
-                  <Building2 size={20} />
-                </div>
-                <div className={styles.stepContent}>
-                  <h4>Property Viewing</h4>
-                  <p>We organize viewings and provide complete property information.</p>
-                </div>
-              </div>
-              <div className={styles.howStep}>
-                <div className={styles.stepIcon}>
-                  <FileCheck size={20} />
-                </div>
-                <div className={styles.stepContent}>
-                  <h4>Document Preparation</h4>
-                  <p>We handle all document verification and ownership registration.</p>
-                </div>
-              </div>
-              <div className={styles.howStep}>
-                <div className={styles.stepIcon}>
-                  <Handshake size={20} />
-                </div>
-                <div className={styles.stepContent}>
-                  <h4>Deal Completion</h4>
-                  <p>We support you through contract signing and beyond.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className={styles.testimonialsSection}>
-        <h2 className={styles.sectionTitle}>What Clients Say</h2>
-        <div className={styles.testimonialsGrid}>
-          <div className={styles.testimonialCard}>
-            <div className={styles.stars}>
-              <Star size={16} fill="#f59e0b" color="#f59e0b" />
-              <Star size={16} fill="#f59e0b" color="#f59e0b" />
-              <Star size={16} fill="#f59e0b" color="#f59e0b" />
-              <Star size={16} fill="#f59e0b" color="#f59e0b" />
-              <Star size={16} fill="#f59e0b" color="#f59e0b" />
-            </div>
-            <p>&quot;TenantPro completely transformed how I manage my properties. The platform is intuitive and the support team is amazing!&quot;</p>
-            <div className={styles.testimonialAuthor}>
-              <div className={styles.authorAvatar}>JM</div>
-              <div>
-                <strong>Juan Martinez</strong>
-                <span>Property Owner</span>
-              </div>
-            </div>
-          </div>
-          <div className={styles.testimonialCard}>
-            <div className={styles.stars}>
-              <Star size={16} fill="#f59e0b" color="#f59e0b" />
-              <Star size={16} fill="#f59e0b" color="#f59e0b" />
-              <Star size={16} fill="#f59e0b" color="#f59e0b" />
-              <Star size={16} fill="#f59e0b" color="#f59e0b" />
-              <Star size={16} fill="#f59e0b" color="#f59e0b" />
-            </div>
-            <p>&quot;Finding a rental has never been easier. The process was smooth and I found my perfect apartment in days!&quot;</p>
-            <div className={styles.testimonialAuthor}>
-              <div className={styles.authorAvatar}>MS</div>
-              <div>
-                <strong>Maria Santos</strong>
-                <span>Tenant</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Contact / CTA Section */}
-      <section id="contact" className={styles.contactSection}>
-        <div className={styles.contactInner}>
-          <div className={styles.contactForm}>
-            <h2>Let&apos;s Discuss Partnership</h2>
-            <p>Ready to get started? Fill out the form and we&apos;ll be in touch.</p>
-            <form onSubmit={(e) => e.preventDefault()}>
-              <input type="text" placeholder="Your Name" />
-              <input type="email" placeholder="Email Address" />
-              <input type="tel" placeholder="Phone Number" />
-              <textarea placeholder="Your Message" rows={4}></textarea>
-              <button type="submit">
-                Send Message <ChevronRight size={18} />
-              </button>
-            </form>
-          </div>
-          <div className={styles.contactInfo}>
-            <div className={styles.contactCard}>
-              <div className={styles.contactIcon}>
-                <Phone size={20} />
-              </div>
-              <div>
-                <span>Call Us</span>
-                <strong>+63 (2) 8888-0000</strong>
-              </div>
-            </div>
-            <div className={styles.contactCard}>
-              <div className={styles.contactIcon}>
-                <Mail size={20} />
-              </div>
-              <div>
-                <span>Email Us</span>
-                <strong>hello@tenantpro.com</strong>
-              </div>
-            </div>
-            <div className={styles.contactCard}>
-              <div className={styles.contactIcon}>
-                <MapPin size={20} />
-              </div>
-              <div>
-                <span>Visit Us</span>
-                <strong>BGC, Taguig City</strong>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className={styles.footer}>
+      {/* 11. Footer */}
+      <footer id="contact" className={styles.footer}>
         <div className={styles.footerInner}>
           <div className={styles.footerBrand}>
             <div className={styles.logo}>
@@ -393,20 +507,26 @@ export default function Home() {
               </div>
               <span className={styles.logoTitle}>TenantPro</span>
             </div>
-            <p>Your trusted partner in property management.</p>
+            <p>Simplifying property management for everyone.</p>
           </div>
           <div className={styles.footerLinks}>
             <div className={styles.footerCol}>
-              <h4>Company</h4>
-              <a href="#about">About Us</a>
-              <a href="#catalog">Properties</a>
-              <a href="#contact">Contact</a>
+              <h4>Platform</h4>
+              <a href="#browse">Browse Units</a>
+              <a href="#landlord">For Landlords</a>
+              <a href="#features">Features</a>
             </div>
             <div className={styles.footerCol}>
-              <h4>Services</h4>
-              <a href="#">Property Rental</a>
-              <a href="#">Property Sales</a>
-              <a href="#">Management</a>
+              <h4>Support</h4>
+              <a href="/help">Help Center</a>
+              <a href="/contact">Contact Us</a>
+              <a href="/privacy">Privacy Policy</a>
+            </div>
+            <div className={styles.footerCol}>
+              <h4>Contact</h4>
+              <p>Valenzuela City, Philippines</p>
+              <p>support@tenantpro.com</p>
+              <p>+63 999 999 9999</p>
             </div>
           </div>
         </div>
@@ -416,4 +536,54 @@ export default function Home() {
       </footer>
     </main>
   );
+}
+
+// Sub-components for cleaner code
+function FeatureItem({ icon, title, desc }: { icon: React.ReactNode, title: string, desc: string }) {
+  return (
+    <div className={styles.featureItem}>
+      <div className={styles.featureIcon}>{icon}</div>
+      <h3>{title}</h3>
+      <p>{desc}</p>
+    </div>
+  );
+}
+
+function Step({ number, title, desc }: { number: number, title: string, desc: string }) {
+  return (
+    <div className={styles.stepRow}>
+      <div className={styles.stepNumber}>{number}</div>
+      <div>
+        <h4>{title}</h4>
+        <p>{desc}</p>
+      </div>
+    </div>
+  );
+}
+
+function ListingCard({ image, title, location, price, type, tags }: any) {
+  return (
+    <div className={styles.listingCard}>
+      <div className={styles.listingImage}>
+        <img src={image} alt={title} />
+        <span className={styles.listingType}>{type}</span>
+      </div>
+      <div className={styles.listingInfo}>
+        <div className={styles.listingHeader}>
+          <h3>{title}</h3>
+          <span className={styles.listingPrice}>{price}<span>/mo</span></span>
+        </div>
+        <p className={styles.listingLoc}><MapPin size={14} /> {location}</p>
+        <div className={styles.listingTags}>
+          {tags.map((t: string, i: number) => <span key={i}>{t}</span>)}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function DollarSignIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-dollar-sign"><line x1="12" x2="12" y1="2" y2="22" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
+  )
 }
