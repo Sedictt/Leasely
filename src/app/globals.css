@@ -1,28 +1,45 @@
 :root {
-  --background: #f8fafc;
-  /* Slate 50 - Very light/clean */
-  --foreground: #0f172a;
+  /* Dark Theme Color Palette - Dark Green/Teal */
+  --background: #0f1a14;
+  /* Very dark forest green - main background */
+  --foreground: #f5f7f6;
+  /* Off white - primary text on dark */
 
-  --muted-foreground: #64748b;
+  --muted-foreground: #c4d3cb;
+  /* Mist green - secondary text */
 
-  /* Vibrant modern palette */
-  --primary: #6366f1;
-  /* Indigo 500 - Brighter */
-  --primary-hover: #4f46e5;
-  --primary-glow: rgba(99, 102, 241, 0.4);
+  /* Primary colors (brighter for dark theme) */
+  --primary: #5a7c6b;
+  /* Sage green - main brand color (brighter) */
+  --primary-hover: #6b8d7c;
+  /* Lighter on hover */
+  --primary-glow: rgba(90, 124, 107, 0.4);
 
-  --secondary: #ec4899;
-  /* Pink 500 */
-  --accent: #8b5cf6;
-  /* Violet 500 */
+  --secondary: #8fa99a;
+  /* Soft sage - secondary actions */
+  --accent: #c4d3cb;
+  /* Mist green - tertiary/accents */
 
-  --surface: rgba(255, 255, 255, 0.75);
-  --surface-border: rgba(255, 255, 255, 0.8);
-  --surface-hover: rgba(255, 255, 255, 0.9);
+  /* Surface colors */
+  --surface: rgba(45, 74, 62, 0.3);
+  /* Dark green with transparency */
+  --surface-border: rgba(196, 211, 203, 0.2);
+  /* Light border on dark */
+  --surface-hover: rgba(45, 74, 62, 0.5);
 
-  --success: #10b981;
-  --warning: #f59e0b;
-  --danger: #ef4444;
+  /* Supporting colors */
+  --surface-light: #1a2e26;
+  /* Slightly lighter dark green */
+  --surface-dark: #0a120d;
+  /* Even darker */
+
+  /* Semantic colors */
+  --success: #8fa99a;
+  /* Soft sage */
+  --warning: #d4a574;
+  /* Warm amber (unchanged) */
+  --danger: #c47b7b;
+  /* Warm red (unchanged) */
 
   --font-sans: var(--font-inter), system-ui, sans-serif;
   --font-heading: var(--font-outfit), system-ui, sans-serif;
