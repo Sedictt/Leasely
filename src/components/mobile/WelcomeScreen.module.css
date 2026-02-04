@@ -3,8 +3,7 @@
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    background: linear-gradient(180deg, #1a2e26 0%, #0f1a14 100%);
-    /* Dark forest green gradient */
+    background: var(--background);
     padding: 1.5rem;
     overflow: hidden;
 }
@@ -15,11 +14,10 @@
 }
 
 .appName {
-    font-family: var(--font-heading, "Outfit", sans-serif);
+    font-family: var(--font-heading);
     font-size: 1.75rem;
     font-weight: 700;
-    color: #c4d3cb;
-    /* Light mist green for contrast */
+    color: var(--muted-foreground);
     margin: 0;
     letter-spacing: -0.01em;
 }
@@ -35,35 +33,30 @@
 
 .heroSection {
     text-align: left;
-    /* Changed from center to left */
     max-width: 420px;
     position: relative;
     z-index: 10;
 }
 
 .catchPhrase {
-    font-family: var(--font-heading, "Outfit", sans-serif);
+    font-family: var(--font-heading);
     font-size: 3rem;
-    /* Increased from 2.5rem for more impact */
     font-weight: 800;
     line-height: 1.2;
-    color: #f5f7f6;
-    /* Off white for dark background */
+    color: var(--foreground);
     margin: 0 0 1.5rem 0;
     letter-spacing: -0.03em;
 }
 
 .highlight {
-    color: #8fa99a;
-    /* Soft sage - visible on dark */
+    color: var(--primary);
     position: relative;
 }
 
 .subText {
     font-size: 1.125rem;
     line-height: 1.6;
-    color: #c4d3cb;
-    /* Mist green - lighter for dark background */
+    color: var(--muted-foreground);
     margin: 0;
     font-weight: 400;
 }
@@ -73,13 +66,12 @@
     width: 300px;
     height: 300px;
     border-radius: 50%;
-    background: radial-gradient(circle, #2d4a3e 0%, transparent 70%);
-    /* Darker forest green radial */
+    background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     pointer-events: none;
-    opacity: 0.3;
+    opacity: 0.15;
 }
 
 .footer {
@@ -98,36 +90,49 @@
     justify-content: center;
     gap: 0.75rem;
     padding: 1rem 2rem;
-    background: linear-gradient(135deg, #5a7c6b 0%, #446b5c 100%);
-    /* Brighter sage to teal for dark bg */
-    color: #f5f7f6;
-    /* Off white */
+    background: var(--primary);
+    color: white;
     border: none;
     border-radius: 16px;
     font-size: 1.125rem;
     font-weight: 600;
     font-family: var(--font-sans);
     cursor: pointer;
-    box-shadow: 0 8px 24px rgba(90, 124, 107, 0.4);
+    box-shadow: 0 8px 24px var(--primary-glow);
     transition: all 0.3s ease;
 }
 
 .getStartedButton:hover {
-    background: linear-gradient(135deg, #6b8d7c 0%, #56806d 100%);
-    /* Lighter on hover */
+    background: var(--primary-hover);
     transform: translateY(-2px);
-    box-shadow: 0 12px 32px rgba(90, 124, 107, 0.5);
+    box-shadow: 0 12px 32px var(--primary-glow);
 }
 
 .getStartedButton:active {
     transform: translateY(0);
 }
 
+.skipButton {
+    width: 100%;
+    padding: 0.75rem;
+    background: transparent;
+    color: var(--muted-foreground);
+    border: none;
+    font-size: 1rem;
+    font-weight: 500;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.skipButton:hover {
+    color: var(--foreground);
+}
+
 /* Mobile optimizations */
 @media (max-width: 480px) {
     .catchPhrase {
         font-size: 2.25rem;
-        /* Adjusted proportionally from 3rem */
     }
 
     .subText {

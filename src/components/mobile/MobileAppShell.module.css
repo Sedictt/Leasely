@@ -1,0 +1,99 @@
+.shell {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--background);
+}
+
+.mainContent {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 80px;
+    /* Space for bottom bar to not overlap content */
+}
+
+.bottomNav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 80px;
+    background: rgba(11, 14, 20, 0.6);
+    /* Neural Dark with opacity */
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-top: 1px solid var(--surface-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 1rem 1rem 1rem;
+    z-index: 100;
+}
+
+.navItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    background: none;
+    border: none;
+    color: var(--muted-foreground);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 64px;
+}
+
+.navItem:active {
+    transform: scale(0.95);
+}
+
+.navItem.active {
+    color: var(--primary);
+}
+
+.navLabel {
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.indicator {
+    position: absolute;
+    top: 0;
+    height: 2px;
+    width: 40px;
+    background: var(--primary);
+    border-radius: 0 0 4px 4px;
+    box-shadow: 0 2px 8px var(--primary-glow);
+}
+
+.fab {
+    position: fixed;
+    right: 1.5rem;
+    width: 56px;
+    height: 56px;
+    border-radius: 28px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 12px var(--primary-glow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 200;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.fab:hover {
+    transform: scale(1.05);
+    background: var(--primary-hover);
+}
+
+.fab:active {
+    transform: scale(0.95);
+}

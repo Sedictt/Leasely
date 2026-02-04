@@ -1,0 +1,110 @@
+/* CSS for InboxScreen - reusing existing styles + new specifics */
+.container {
+    padding: 1.5rem 1.5rem 6.5rem 1.5rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    margin-bottom: 1.5rem;
+}
+
+.title {
+    font-family: var(--font-heading);
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--foreground);
+    margin: 0 0 0.5rem 0;
+}
+
+.subtitle {
+    font-size: 0.9375rem;
+    color: var(--muted-foreground);
+}
+
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    overflow-y: auto;
+    padding-bottom: 2rem;
+    scrollbar-width: none;
+}
+
+.list::-webkit-scrollbar {
+    display: none;
+}
+
+.announcementCard {
+    background: var(--surface-light);
+    border: 1px solid var(--surface-border);
+    border-radius: 16px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.announcementHeader {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.announcementIcon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.iconReminder {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10B981;
+}
+
+.announcementTitle {
+    font-weight: 600;
+    color: var(--foreground);
+    flex: 1;
+}
+
+.announcementDate {
+    font-size: 0.75rem;
+    color: var(--muted-foreground);
+}
+
+.announcementBody {
+    font-size: 0.875rem;
+    color: var(--muted-foreground);
+    line-height: 1.5;
+}
+
+.priorityBadge {
+    padding: 0.25rem 0.6rem;
+    border-radius: 100px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.priorityHigh {
+    background: rgba(239, 68, 68, 0.1);
+    color: #EF4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    height: 300px;
+    color: var(--muted-foreground);
+}

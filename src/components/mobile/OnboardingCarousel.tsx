@@ -1,31 +1,31 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, MessageSquare, FileCheck, ChevronRight } from "lucide-react";
+import { ChevronLeft, Search, MessageSquare, FileCheck, Building2, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import styles from "./OnboardingCarousel.module.css";
 
 interface Slide {
-    icon: React.ReactNode;
     title: string;
     description: string;
+    icon: React.ReactNode;
 }
 
 const slides: Slide[] = [
     {
-        icon: <Search size={64} strokeWidth={1.5} />,
-        title: "Discover Your Perfect Space",
-        description: "Browse thousands of verified apartments, dorms, and housing options tailored to your needs and budget."
+        title: "Your Building is the Server",
+        description: "Join your residential community's exclusive digital space. One building, one secure server for everyone.",
+        icon: <Building2 size={80} strokeWidth={1.5} />
     },
     {
-        icon: <MessageSquare size={64} strokeWidth={1.5} />,
-        title: "Connect Instantly",
-        description: "Chat directly with landlords and property managers. Schedule tours and get answers in real-time."
+        title: "Your Unit is the Channel",
+        description: "Access your private unit channel for maintenance and lease management. Connect with neighbors in public channels.",
+        icon: <MessageSquare size={80} strokeWidth={1.5} />
     },
     {
-        icon: <FileCheck size={64} strokeWidth={1.5} />,
-        title: "Manage Everything",
-        description: "Sign leases, pay rent, submit maintenance requests, and track everything in one secure place."
+        title: "Secure Community",
+        description: "Verified tenants only. Report issues, get updates, and chat securely with your landlord and community.",
+        icon: <ShieldCheck size={80} strokeWidth={1.5} />
     }
 ];
 
@@ -49,36 +49,41 @@ export function OnboardingCarousel({ onComplete }: { onComplete?: () => void }) 
         }
     };
 
-    const goToSlide = (index: number) => {
-        setDirection(index > currentSlide ? 1 : -1);
-        setCurrentSlide(index);
-    };
-
     const variants = {
         enter: (direction: number) => ({
-            x: direction > 0 ? 300 : -300,
-            opacity: 0
+            x: direction > 0 ? 100 : -100, // Reduced distance for modern feel
+            opacity: 0,
+            scale: 0.95
         }),
         center: {
             x: 0,
-            opacity: 1
+            opacity: 1,
+            scale: 1
         },
         exit: (direction: number) => ({
-            x: direction > 0 ? -300 : 300,
-            opacity: 0
+            x: direction > 0 ? -100 : 100,
+            opacity: 0,
+            scale: 0.95
         })
     };
 
     return (
         <div className={styles.container}>
-            {/* Skip button */}
-            <button className={styles.skipButton} onClick={onComplete}>
-                Skip
-            </button>
+            {/* Back button - Top Left Absolute */}
+            {currentSlide > 0 && (
+                <motion.button
+                    className={styles.backButton}
+                    onClick={prevSlide}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                >
+                    <ChevronLeft size={24} />
+                </motion.button>
+            )}
 
-            {/* Slide content */}
             <div className={styles.slideContainer}>
-                <AnimatePresence initial={false} custom={direction}>
+                <AnimatePresence initial={false} custom={direction} mode="popLayout">
                     <motion.div
                         key={currentSlide}
                         custom={direction}
@@ -86,69 +91,47 @@ export function OnboardingCarousel({ onComplete }: { onComplete?: () => void }) 
                         initial="enter"
                         animate="center"
                         exit="exit"
-                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                        transition={{
+                            x: { type: "spring", stiffness: 300, damping: 30 },
+                            opacity: { duration: 0.2 },
+                            scale: { duration: 0.2 }
+                        }}
                         className={styles.slide}
                     >
-                        {/* Icon */}
-                        <motion.div
-                            className={styles.iconWrapper}
-                            initial={{ scale: 0.8, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            transition={{ delay: 0.2, duration: 0.4 }}
-                        >
-                            {slides[currentSlide].icon}
-                        </motion.div>
+                        <div className={styles.card}>
+                            {/* Icon */}
+                            <div className={styles.iconWrapper}>
+                                {slides[currentSlide].icon}
+                            </div>
 
-                        {/* Title */}
-                        <motion.h2
-                            className={styles.title}
-                            initial={{ y: 20, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            transition={{ delay: 0.3, duration: 0.4 }}
-                        >
-                            {slides[currentSlide].title}
-                        </motion.h2>
+                            {/* Title */}
+                            <h1 className={styles.title}>
+                                {slides[currentSlide].title}
+                            </h1>
 
-                        {/* Description */}
-                        <motion.p
-                            className={styles.description}
-                            initial={{ y: 20, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            transition={{ delay: 0.4, duration: 0.4 }}
-                        >
-                            {slides[currentSlide].description}
-                        </motion.p>
+                            {/* Description */}
+                            <p className={styles.description}>
+                                {slides[currentSlide].description}
+                            </p>
+                        </div>
                     </motion.div>
                 </AnimatePresence>
             </div>
 
-            {/* Bottom section */}
-            <div className={styles.footer}>
-                {/* Indicators */}
-                <div className={styles.indicators}>
-                    {slides.map((_, index) => (
-                        <button
-                            key={index}
-                            className={`${styles.indicator} ${index === currentSlide ? styles.indicatorActive : ""
-                                }`}
-                            onClick={() => goToSlide(index)}
-                            aria-label={`Go to slide ${index + 1}`}
-                        />
-                    ))}
-                </div>
+            {/* Bottom Controls - Fixed */}
+            <div className={styles.bottomControls}>
+                <button
+                    className={styles.continueButton}
+                    onClick={nextSlide}
+                >
+                    Continue
+                </button>
 
-                {/* Navigation buttons */}
-                <div className={styles.navigation}>
-                    {currentSlide > 0 && (
-                        <button className={styles.backButton} onClick={prevSlide}>
-                            Back
-                        </button>
-                    )}
-
-                    <button className={styles.nextButton} onClick={nextSlide}>
-                        {currentSlide === slides.length - 1 ? "Get Started" : "Next"}
-                        <ChevronRight size={20} strokeWidth={2.5} />
-                    </button>
+                <div className={styles.progressBar}>
+                    <div
+                        className={styles.progressFill}
+                        style={{ width: `${((currentSlide + 1) / slides.length) * 100}%` }}
+                    />
                 </div>
             </div>
         </div>

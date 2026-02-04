@@ -27,16 +27,13 @@ export function WelcomeScreen({ onGetStarted }: { onGetStarted?: () => void }) {
                 >
                     {/* Catch phrase */}
                     <h1 className={styles.catchPhrase}>
-                        Find your perfect{" "}
-                        <span className={styles.highlight}>home</span>,
-                        <br />
-                        effortlessly
+                        Your Building, <br />
+                        <span className={styles.highlight}>Your Server.</span>
                     </h1>
 
                     {/* Sub text */}
                     <p className={styles.subText}>
-                        Discover apartments, manage leases, and connect with
-                        landlords all in one place. Your housing journey starts here.
+                        Join the community. Manage your unit channel. Connect with your neighbors.
                     </p>
                 </motion.div>
 
@@ -49,7 +46,7 @@ export function WelcomeScreen({ onGetStarted }: { onGetStarted?: () => void }) {
                 />
             </div>
 
-            {/* Get Started button - Bottom */}
+            {/* Actions - Bottom */}
             <motion.div
                 className={styles.footer}
                 initial={{ opacity: 0, y: 20 }}
