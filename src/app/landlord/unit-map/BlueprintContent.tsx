@@ -88,7 +88,7 @@ export default function BlueprintContent() {
         );
     }
 
-        if (selectedProperty) {
+    if (selectedProperty) {
         return (
             <div className={styles.viewContainer}>
                 <header className={styles.header}>
@@ -114,12 +114,12 @@ export default function BlueprintContent() {
         <div className={styles.overview}>
             <header className={styles.header}>
                 <div>
-                    <h1 className={styles.title}>Blueprints</h1>
+                    <h1 className={styles.title}>Unit Maps</h1>
                     <p className={styles.subtitle}>Visually manage your property layouts and units.</p>
                 </div>
                 <button onClick={() => setIsAddingProperty(true)} className={styles.primaryBtn}>
                     <Plus size={18} />
-                    New Blueprint
+                    New Unit Map
                 </button>
             </header>
 
@@ -149,7 +149,7 @@ export default function BlueprintContent() {
                 {properties.length === 0 && (
                     <div className={styles.emptyState}>
                         <Home size={48} />
-                        <h3>No blueprints yet</h3>
+                        <h3>No unit maps yet</h3>
                         <p>Start by adding a property to create your first visual map.</p>
                         <button onClick={() => setIsAddingProperty(true)} className={styles.secondaryBtn}>
                             Get Started
@@ -167,7 +167,7 @@ export default function BlueprintContent() {
                             exit={{ opacity: 0, scale: 0.95, y: 20 }}
                             className={styles.modal}
                         >
-                            <h2 className={styles.modalTitle}>Create New Blueprint</h2>
+                            <h2 className={styles.modalTitle}>Create New Unit Map</h2>
                             <form onSubmit={handleAddProperty} className={styles.form}>
                                 <div className={styles.inputGroup}>
                                     <label>Property Name</label>

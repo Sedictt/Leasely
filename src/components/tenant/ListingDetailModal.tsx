@@ -18,9 +18,13 @@ import {
     Mail,
     Calendar,
     CheckCircle2,
-    AlertCircle
+    AlertCircle,
+    LayoutTemplate,
+    Maximize2,
+    Minimize2
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
+import VisualBuilder from "@/components/landlord/VisualBuilder";
 import styles from "./ListingDetailModal.module.css";
 
 type ListingDetailModalProps = {
@@ -48,6 +52,17 @@ type ListingData = {
     city: string;
     contact_phone: string | null;
     show_phone: boolean;
+    property_id: string; // Needed for blueprint
+};
+
+type UnitData = {
+    id: string;
+    unit_type: string;
+    grid_x: number;
+    grid_y: number;
+    status: string;
+    unit_number: string | null;
+    rent_amount: number | null;
 };
 
 const propertyTypeLabels: Record<string, string> = {
@@ -63,6 +78,9 @@ export default function ListingDetailModal({ listingId, onClose }: ListingDetail
     const [listing, setListing] = useState<ListingData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+    const [activeTab, setActiveTab] = useState<'photos' | 'blueprint'>('photos');
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [units, setUnits] = useState<UnitData[]>([]);
 
     // Inquiry form state
     const [showInquiryForm, setShowInquiryForm] = useState(false);
@@ -88,7 +106,7 @@ export default function ListingDetailModal({ listingId, onClose }: ListingDetail
                     id, title, headline, description, property_type, available_units,
                     price_range_min, price_range_max, price_display,
                     deposit_months, advance_months, min_lease_months,
-                    display_address, city, contact_phone, show_phone,
+                    display_address, city, contact_phone, show_phone, property_id,
                     listing_photos (id, url, caption, is_primary),
                     listing_amenities (amenities (name))
                 `)
@@ -111,6 +129,16 @@ export default function ListingDetailModal({ listingId, onClose }: ListingDetail
                     listing_photos: photos,
                     listing_amenities: amenities
                 });
+
+                // Fetch units for blueprint
+                if (data.property_id) {
+                    const { data: unitData } = await supabase
+                        .from('units')
+                        .select('id, unit_type, grid_x, grid_y, status, unit_number, rent_amount')
+                        .eq('property_id', data.property_id);
+
+                    if (unitData) setUnits(unitData);
+                }
             }
             setIsLoading(false);
 
@@ -205,56 +233,104 @@ export default function ListingDetailModal({ listingId, onClose }: ListingDetail
                     </div>
                 ) : (
                     <>
-                        {/* LEFT: Immersive Gallery */}
+                        {/* LEFT: Immersive Gallery or Blueprint */}
                         <div className={styles.galleryColumn}>
-                            <div className={styles.mainImageContainer}>
-                                {listing?.listing_photos && listing.listing_photos.length > 0 ? (
-                                    <>
-                                        <img
-                                            src={listing.listing_photos[currentPhotoIndex].url}
-                                            alt={listing.listing_photos[currentPhotoIndex].caption || listing.title}
-                                            className={styles.mainImage}
-                                        />
-                                        <div className={styles.galleryOverlay}>
-                                            <div className={styles.galleryCounter}>
-                                                {currentPhotoIndex + 1} / {listing.listing_photos.length}
-                                            </div>
-                                            {listing.listing_photos[currentPhotoIndex].caption && (
-                                                <p>{listing.listing_photos[currentPhotoIndex].caption}</p>
-                                            )}
-                                        </div>
-                                    </>
-                                ) : (
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'white' }}>
-                                        No Photos Available
-                                    </div>
-                                )}
-
-                                {/* Navigation Arrows */}
-                                {listing?.listing_photos && listing.listing_photos.length > 1 && (
-                                    <>
-                                        <button className={`${styles.navBtn} ${styles.prevBtn}`} onClick={prevPhoto}>
-                                            <ChevronLeft size={24} />
-                                        </button>
-                                        <button className={`${styles.navBtn} ${styles.nextBtn}`} onClick={nextPhoto}>
-                                            <ChevronRight size={24} />
-                                        </button>
-                                    </>
-                                )}
+                            {/* View Switcher */}
+                            <div className={styles.viewSwitcher}>
+                                <button
+                                    className={`${styles.viewBtn} ${activeTab === 'photos' ? styles.activeView : ''}`}
+                                    onClick={() => setActiveTab('photos')}
+                                >
+                                    Photos
+                                </button>
+                                <button
+                                    className={`${styles.viewBtn} ${activeTab === 'blueprint' ? styles.activeView : ''}`}
+                                    onClick={() => setActiveTab('blueprint')}
+                                >
+                                    <LayoutTemplate size={16} style={{ marginRight: 6 }} />
+                                    Unit Map
+                                </button>
                             </div>
 
-                            {/* Thumbnail Strip */}
-                            {listing?.listing_photos && listing.listing_photos.length > 1 && (
-                                <div className={styles.thumbnailStrip}>
-                                    {listing.listing_photos.map((photo, idx) => (
-                                        <div
-                                            key={photo.id}
-                                            className={`${styles.thumbnail} ${idx === currentPhotoIndex ? styles.active : ''}`}
-                                            onClick={() => setCurrentPhotoIndex(idx)}
+                            {activeTab === 'photos' ? (
+                                <>
+                                    <div className={styles.mainImageContainer}>
+                                        {/* Expand Button */}
+                                        <button
+                                            className={styles.expandTriggerBtn}
+                                            onClick={() => setIsExpanded(true)}
+                                            title="Expand View"
                                         >
-                                            <img src={photo.url} alt="" />
+                                            <Maximize2 size={18} />
+                                        </button>
+
+                                        {listing?.listing_photos && listing.listing_photos.length > 0 ? (
+                                            <>
+                                                <img
+                                                    src={listing.listing_photos[currentPhotoIndex].url}
+                                                    alt={listing.listing_photos[currentPhotoIndex].caption || listing.title}
+                                                    className={styles.mainImage}
+                                                />
+                                                <div className={styles.galleryOverlay}>
+                                                    <div className={styles.galleryCounter}>
+                                                        {currentPhotoIndex + 1} / {listing.listing_photos.length}
+                                                    </div>
+                                                    {listing.listing_photos[currentPhotoIndex].caption && (
+                                                        <p>{listing.listing_photos[currentPhotoIndex].caption}</p>
+                                                    )}
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'white' }}>
+                                                No Photos Available
+                                            </div>
+                                        )}
+
+                                        {/* Navigation Arrows */}
+                                        {listing?.listing_photos && listing.listing_photos.length > 1 && (
+                                            <>
+                                                <button className={`${styles.navBtn} ${styles.prevBtn}`} onClick={prevPhoto}>
+                                                    <ChevronLeft size={24} />
+                                                </button>
+                                                <button className={`${styles.navBtn} ${styles.nextBtn}`} onClick={nextPhoto}>
+                                                    <ChevronRight size={24} />
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
+
+                                    {/* Thumbnail Strip */}
+                                    {listing?.listing_photos && listing.listing_photos.length > 1 && (
+                                        <div className={styles.thumbnailStrip}>
+                                            {listing.listing_photos.map((photo, idx) => (
+                                                <div
+                                                    key={photo.id}
+                                                    className={`${styles.thumbnail} ${idx === currentPhotoIndex ? styles.active : ''}`}
+                                                    onClick={() => setCurrentPhotoIndex(idx)}
+                                                >
+                                                    <img src={photo.url} alt="" />
+                                                </div>
+                                            ))}
                                         </div>
-                                    ))}
+                                    )}
+                                </>
+                            ) : (
+                                /* BLUEPRINT VIEW */
+                                <div className={styles.blueprintContainer}>
+                                    {/* Expand Button */}
+                                    <button
+                                        className={styles.expandTriggerBtn}
+                                        onClick={() => setIsExpanded(true)}
+                                        title="Expand Map"
+                                    >
+                                        <Maximize2 size={18} />
+                                    </button>
+
+                                    <VisualBuilder
+                                        propertyId={listing?.property_id || ''}
+                                        initialUnits={units}
+                                        readOnly={true}
+                                    />
                                 </div>
                             )}
                         </div>
@@ -343,9 +419,40 @@ export default function ListingDetailModal({ listingId, onClose }: ListingDetail
                                     </div>
                                 </>
                             ) : (
-                                /* Inquiry Form */
+                                /* Inquiry Form Container */
                                 <div className={styles.inquiryFormContainer}>
-                                    {inquirySuccess ? (
+                                    {!inquiryForm.email ? (
+                                        /* LOGIN REQUIRED STATE */
+                                        <div className={styles.loginRequired}>
+                                            <div className={styles.loginHeader}>
+                                                <button
+                                                    className={styles.backBtn}
+                                                    onClick={() => setShowInquiryForm(false)}
+                                                >
+                                                    <ChevronLeft size={20} />
+                                                    Back
+                                                </button>
+                                            </div>
+
+                                            <div className={styles.loginContent}>
+                                                <User size={64} className={styles.loginIcon} />
+                                                <h3>Log in to Inquire</h3>
+                                                <p>To ensure trust and safety, you need an account to message landlords. It takes less than a minute!</p>
+
+                                                <div className={styles.loginActions}>
+                                                    <a href={`/login?redirect=/tenant/search`} className={styles.primaryLoginBtn}>
+                                                        Log In / Sign Up
+                                                    </a>
+                                                    <button
+                                                        className={styles.secondaryLoginBtn}
+                                                        onClick={() => setShowInquiryForm(false)}
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : inquirySuccess ? (
                                         <div className={styles.successMessage}>
                                             <CheckCircle2 size={48} color="var(--success)" />
                                             <h3>Inquiry Sent!</h3>
@@ -385,6 +492,7 @@ export default function ListingDetailModal({ listingId, onClose }: ListingDetail
                                                             value={inquiryForm.name}
                                                             onChange={(e) => setInquiryForm(f => ({ ...f, name: e.target.value }))}
                                                             required
+                                                            readOnly // Name is read-only since it triggers from account
                                                         />
                                                     </div>
                                                     <div className={styles.formGroup}>
@@ -398,6 +506,7 @@ export default function ListingDetailModal({ listingId, onClose }: ListingDetail
                                                             value={inquiryForm.email}
                                                             onChange={(e) => setInquiryForm(f => ({ ...f, email: e.target.value }))}
                                                             required
+                                                            readOnly // Email is read-only
                                                         />
                                                     </div>
                                                 </div>
@@ -465,6 +574,85 @@ export default function ListingDetailModal({ listingId, onClose }: ListingDetail
                     </>
                 )}
             </div>
+
+            {/* FULLSCREEN OVERLAY */}
+            {isExpanded && (
+                <div className={styles.expandedOverlay}>
+                    {/* Header Controls */}
+                    <div className={styles.expandedHeader}>
+                        <div className={styles.expandedHeaderContent}>
+                            {/* Allow switching views even in expanded mode */}
+                            <button
+                                className={`${styles.viewBtn} ${activeTab === 'photos' ? styles.activeView : ''}`}
+                                onClick={() => setActiveTab('photos')}
+                            >
+                                Photos
+                            </button>
+                            <button
+                                className={`${styles.viewBtn} ${activeTab === 'blueprint' ? styles.activeView : ''}`}
+                                onClick={() => setActiveTab('blueprint')}
+                            >
+                                <LayoutTemplate size={16} style={{ marginRight: 6 }} />
+                                Unit Map
+                            </button>
+                        </div>
+
+                        <button
+                            className={styles.expandedCloseBtn}
+                            onClick={() => setIsExpanded(false)}
+                            title="Exit Fullscreen"
+                        >
+                            <Minimize2 size={24} />
+                        </button>
+                    </div>
+
+                    {/* Content */}
+                    <div className={styles.expandedContent}>
+                        {activeTab === 'photos' ? (
+                            <>
+                                {listing?.listing_photos && listing.listing_photos.length > 0 ? (
+                                    <img
+                                        src={listing.listing_photos[currentPhotoIndex].url}
+                                        alt={listing.listing_photos[currentPhotoIndex].caption || listing.title}
+                                        className={styles.expandedImage}
+                                    />
+                                ) : (
+                                    <div style={{ color: 'white' }}>No Photos</div>
+                                )}
+
+                                {/* Photo Navigation in Fullscreen */}
+                                {listing?.listing_photos && listing.listing_photos.length > 1 && (
+                                    <>
+                                        <button className={`${styles.navBtn} ${styles.prevBtn}`} onClick={prevPhoto}>
+                                            <ChevronLeft size={32} />
+                                        </button>
+                                        <button className={`${styles.navBtn} ${styles.nextBtn}`} onClick={nextPhoto}>
+                                            <ChevronRight size={32} />
+                                        </button>
+
+                                        {/* Bottom Caption Overlay */}
+                                        <div className={styles.galleryOverlay}>
+                                            <div className={styles.galleryCounter}>
+                                                {currentPhotoIndex + 1} / {listing.listing_photos.length}
+                                            </div>
+                                            {listing.listing_photos[currentPhotoIndex].caption && (
+                                                <p>{listing.listing_photos[currentPhotoIndex].caption}</p>
+                                            )}
+                                        </div>
+                                    </>
+                                )}
+                            </>
+                        ) : (
+                            /* Expanded Blueprint */
+                            <VisualBuilder
+                                propertyId={listing?.property_id || ''}
+                                initialUnits={units}
+                                readOnly={true}
+                            />
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

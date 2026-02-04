@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect } from "react";
+
 import {
     LayoutDashboard,
     Users,
@@ -14,7 +16,9 @@ import {
     CheckSquare,
     Wallet,
     HelpCircle,
-    Globe
+    Globe,
+    Bot,
+    Bell
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -22,8 +26,37 @@ import styles from "./Sidebar.module.css";
 
 export default function Sidebar() {
     const pathname = usePathname();
+    const [newInquiriesCount, setNewInquiriesCount] = useState(0);
 
     const isActive = (path: string) => pathname === path || pathname.startsWith(path + '/');
+
+    useEffect(() => {
+        fetchNewInquiriesCount();
+
+        // Refresh count every 30 seconds
+        const interval = setInterval(fetchNewInquiriesCount, 30000);
+        return () => clearInterval(interval);
+    }, []);
+
+    async function fetchNewInquiriesCount() {
+        try {
+            const { createClient } = await import('@/utils/supabase/client');
+            const supabase = createClient();
+
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            const { count } = await supabase
+                .from('listing_inquiries')
+                .select('*', { count: 'exact', head: true })
+                .eq('status', 'new');
+
+            setNewInquiriesCount(count || 0);
+        } catch (err) {
+            console.error('Error fetching inquiry count:', err);
+        }
+    }
+
 
     return (
         <aside className={styles.sidebar}>
@@ -64,9 +97,9 @@ export default function Sidebar() {
                     />
                     <NavItem
                         icon={<Map size={20} />}
-                        label="Blueprint"
-                        href="/landlord/blueprint"
-                        active={isActive("/landlord/blueprint")}
+                        label="Unit Map"
+                        href="/landlord/unit-map"
+                        active={isActive("/landlord/unit-map")}
                     />
                     <NavItem
                         icon={<Users size={20} />}
@@ -75,8 +108,16 @@ export default function Sidebar() {
                         active={isActive("/landlord/tenants")}
                     />
                     <NavItem
+                        icon={<Bell size={20} />}
+                        label="Inquiries"
+                        href="/landlord/inquiries"
+                        active={isActive("/landlord/inquiries")}
+                        badge={newInquiriesCount}
+                    />
+                    <NavItem
                         icon={<BarChart3 size={20} />}
                         label="Statistics"
+
                         href="/landlord/statistics"
                         active={isActive("/landlord/statistics")}
                     />
@@ -98,6 +139,12 @@ export default function Sidebar() {
                         label="Finances"
                         href="/landlord/finances"
                         active={isActive("/landlord/finances")}
+                    />
+                    <NavItem
+                        icon={<Bot size={20} />}
+                        label="AI Lease Agent"
+                        href="/landlord/lease-ai"
+                        active={isActive("/landlord/lease-ai")}
                     />
                 </div>
 

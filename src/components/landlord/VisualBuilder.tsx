@@ -45,20 +45,25 @@ const unitConfig: Record<UnitType, { cells: number; label: string }> = {
 
 import { createClient } from '@/utils/supabase/client';
 
-function mapDbStatusToUi(status: string): Unit['status'] {
+function mapDbStatusToUi(status: string, readOnly: boolean = false): Unit['status'] {
+    if (readOnly) {
+        // In read-only (tenant) view, simplify to occupied or vacant
+        if (status === 'available' || status === 'vacant') return 'vacant';
+        return 'occupied';
+    }
     if (status === 'available') return 'vacant';
     if (status === 'vacant') return 'vacant';
     if (status === 'occupied' || status === 'maintenance' || status === 'neardue') return status;
     return 'vacant';
 }
 
-export default function VisualBuilder({ propertyId, initialUnits = [] }: { propertyId: string, initialUnits?: InitialUnit[] }) {
+export default function VisualBuilder({ propertyId, initialUnits = [], readOnly = false }: { propertyId: string, initialUnits?: InitialUnit[], readOnly?: boolean }) {
     const [units, setUnits] = useState<Unit[]>(initialUnits.map((u) => ({
         id: u.id,
         type: u.unit_type as UnitType,
         gridX: u.grid_x,
         gridY: u.grid_y,
-        status: mapDbStatusToUi(u.status),
+        status: mapDbStatusToUi(u.status, readOnly),
         unitNumber: u.unit_number ?? undefined,
         rentAmount: u.rent_amount ?? undefined
     })));
@@ -277,7 +282,7 @@ export default function VisualBuilder({ propertyId, initialUnits = [] }: { prope
                         transformOrigin: '0 0',
                         position: 'relative',
                     }}>
-                        <CanvasContent units={units} ghost={ghostState} activeId={activeId} />
+                        <CanvasContent units={units} ghost={ghostState} activeId={activeId} readOnly={readOnly} />
 
                         {/* Floor Labels */}
                         {Array.from({ length: 10 }).map((_, i) => (
@@ -301,29 +306,31 @@ export default function VisualBuilder({ propertyId, initialUnits = [] }: { prope
                     </div>
                 </div>
 
-                {/* Sidebar */}
-                <aside style={{ width: '280px', background: '#1e293b', borderLeft: '1px solid #475569', display: 'flex', flexDirection: 'column', zIndex: 50 }}>
-                    <div style={{ padding: '1.5rem', borderBottom: '1px solid #334155' }}>
-                        <h2 style={{ color: 'white', fontWeight: 700, fontSize: '1.1rem', marginBottom: '0.5rem' }}>Construction Kit</h2>
-                        <p style={{ color: '#94a3b8', fontSize: '0.8rem' }}>Drag rooms onto the property.</p>
-                    </div>
-                    <div style={{ flex: 1, padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', overflowY: 'auto' }}>
-                        <SidebarUnit type="studio" label="Studio Apt" icon={<User size={16} />} />
-                        <SidebarUnit type="1br" label="1 Bedroom" icon={<User size={16} />} />
-                        <SidebarUnit type="2br" label="2 Bedroom" icon={<User size={16} />} />
-                        <SidebarUnit type="stairs" label="Stairwell" icon={<ArrowUpFromLine size={16} />} />
-                    </div>
-                </aside>
+                {/* Sidebar (Hidden in ReadOnly) */}
+                {!readOnly && (
+                    <aside style={{ width: '280px', background: '#1e293b', borderLeft: '1px solid #475569', display: 'flex', flexDirection: 'column', zIndex: 50 }}>
+                        <div style={{ padding: '1.5rem', borderBottom: '1px solid #334155' }}>
+                            <h2 style={{ color: 'white', fontWeight: 700, fontSize: '1.1rem', marginBottom: '0.5rem' }}>Construction Kit</h2>
+                            <p style={{ color: '#94a3b8', fontSize: '0.8rem' }}>Drag rooms onto the property.</p>
+                        </div>
+                        <div style={{ flex: 1, padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', overflowY: 'auto' }}>
+                            <SidebarUnit type="studio" label="Studio Apt" icon={<User size={16} />} />
+                            <SidebarUnit type="1br" label="1 Bedroom" icon={<User size={16} />} />
+                            <SidebarUnit type="2br" label="2 Bedroom" icon={<User size={16} />} />
+                            <SidebarUnit type="stairs" label="Stairwell" icon={<ArrowUpFromLine size={16} />} />
+                        </div>
+                    </aside>
+                )}
 
                 <AnimatePresence>
-                    {isDraggingExistingUnit && (
+                    {isDraggingExistingUnit && !readOnly && (
                         <TrashZone />
                     )}
                 </AnimatePresence>
             </div>
 
-            {/* DRAG OVERLAY - Follows Mouse (Screen Space) */}
-            {mounted && createPortal(
+            {/* DRAG OVERLAY - Follows Mouse (Screen Space) - Only if not readOnly */}
+            {mounted && !readOnly && createPortal(
                 <DragOverlay dropAnimation={null} zIndex={9999}>
                     {activeType ? (
                         <div style={{
@@ -347,7 +354,7 @@ export default function VisualBuilder({ propertyId, initialUnits = [] }: { prope
     );
 }
 
-function CanvasContent({ units, ghost, activeId }: { units: Unit[], ghost: GhostState | null, activeId: string | null }) {
+function CanvasContent({ units, ghost, activeId, readOnly }: { units: Unit[], ghost: GhostState | null, activeId: string | null, readOnly: boolean }) {
     // ... (inside DraggableUnit function later in file)
     const { setNodeRef } = useDroppable({ id: 'canvas-droppable' });
     const GRID_ROWS = 10;
@@ -355,8 +362,8 @@ function CanvasContent({ units, ghost, activeId }: { units: Unit[], ghost: Ghost
     return (
         <div ref={setNodeRef} style={{ width: '100%', height: '100%', position: 'relative' }}>
 
-            {/* GHOST PREVIEW */}
-            {ghost && (
+            {/* GHOST PREVIEW (Hidden in ReadOnly) */}
+            {ghost && !readOnly && (
                 <div style={{
                     position: 'absolute',
                     left: ghost.x * GRID_CELL_SIZE,
@@ -381,7 +388,7 @@ function CanvasContent({ units, ghost, activeId }: { units: Unit[], ghost: Ghost
             {/* UNITS */}
             {units.map(unit => (
                 <div key={unit.id} style={{ opacity: unit.id === activeId ? 0.3 : 1 }}> {/* Fade out original when dragging */}
-                    <DraggableUnit unit={unit} totalRows={GRID_ROWS} />
+                    <DraggableUnit unit={unit} totalRows={GRID_ROWS} readOnly={readOnly} />
                 </div>
             ))}
         </div>
@@ -442,10 +449,11 @@ function SidebarUnit({ type, label, icon }: { type: UnitType, label: string, ico
 }
 
 // ... (DraggableUnit props remain)
-function DraggableUnit({ unit, totalRows }: { unit: Unit, totalRows: number }) {
+function DraggableUnit({ unit, totalRows, readOnly }: { unit: Unit, totalRows: number, readOnly: boolean }) {
     const { attributes, listeners, setNodeRef } = useDraggable({
         id: unit.id,
-        data: { type: unit.type, isPreset: false }
+        data: { type: unit.type, isPreset: false },
+        disabled: readOnly // Disable dragging in read-only mode
     });
 
     // Pixel math
@@ -476,7 +484,7 @@ function DraggableUnit({ unit, totalRows }: { unit: Unit, totalRows: number }) {
     return (
         <div ref={setNodeRef} style={{
             position: 'absolute', top: pixelY, left: pixelX, width, height: UNIT_HEIGHT,
-            zIndex: 10, cursor: 'grab', boxSizing: 'border-box',
+            zIndex: 10, cursor: readOnly ? 'default' : 'grab', boxSizing: 'border-box',
         }} {...listeners} {...attributes}>
 
             {/* Main Container */}
@@ -543,8 +551,8 @@ function DraggableUnit({ unit, totalRows }: { unit: Unit, totalRows: number }) {
                         {unitConfig[unit.type].label.toUpperCase()}
                     </div>
 
-                    {/* Tenant / Status / Maintenance */}
-                    {!isStairs && (
+                    {/* Tenant / Status / Maintenance - SIMPLIFIED FOR READ ONLY */}
+                    {!isStairs && !readOnly && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, zIndex: 10 }}>
                             {/* Maintenance Overlay (Full Box) */}
                             {unit.status === 'maintenance' && (
@@ -592,6 +600,40 @@ function DraggableUnit({ unit, totalRows }: { unit: Unit, totalRows: number }) {
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                                     <User size={14} color="#ef4444" />
                                     <span style={{ fontSize: '0.7rem', color: '#fca5a5', textShadow: '0 1px 2px black' }}>{unit.tenantName} (Late)</span>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* READ ONLY STATUS (Public View) */}
+                    {!isStairs && readOnly && (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10, width: '100%', height: '100%' }}>
+                            {unit.status === 'occupied' && (
+                                <div style={{
+                                    background: 'rgba(0,0,0,0.4)',
+                                    padding: '4px 8px',
+                                    borderRadius: 4,
+                                    color: '#cbd5e1',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 600,
+                                    display: 'flex', alignItems: 'center', gap: 4
+                                }}>
+                                    <User size={12} />
+                                    Occupied
+                                </div>
+                            )}
+
+                            {unit.status === 'vacant' && (
+                                <div style={{
+                                    background: 'rgba(34, 197, 94, 0.2)',
+                                    border: '1px solid #22c55e',
+                                    padding: '4px 8px',
+                                    borderRadius: 4,
+                                    color: '#4ade80',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 700
+                                }}>
+                                    AVAILABLE
                                 </div>
                             )}
                         </div>

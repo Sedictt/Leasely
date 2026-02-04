@@ -174,11 +174,31 @@
     padding: 0 6px;
     opacity: 0;
     transition: opacity 0.2s ease;
+    position: relative;
+}
+
+/* Show a small dot indicator when sidebar is collapsed */
+.badge::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    background: #ef4444;
+    border: 2px solid #1e293b;
+    border-radius: 50%;
+    opacity: 1;
 }
 
 .sidebar:hover .badge {
     opacity: 1;
 }
+
+.sidebar:hover .badge::before {
+    opacity: 0;
+}
+
 
 /* Footer */
 .footer {

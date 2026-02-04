@@ -1,7 +1,7 @@
 import BlueprintContent from "./BlueprintContent";
 
 export const metadata = {
-    title: "Blueprint | Landlord Pro",
+    title: "Unit Map | Landlord Pro",
 };
 
 export default function BlueprintPage() {
