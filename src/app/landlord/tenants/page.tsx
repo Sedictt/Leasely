@@ -2,10 +2,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Users, Search, Sparkles, AlertCircle, CalendarClock, ShieldCheck } from "lucide-react";
+import { Loader2, Users } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import styles from "./tenants.module.css";
-import { motion, AnimatePresence } from "framer-motion";
 
 type TenantProfile = {
     id: string;
@@ -29,21 +28,9 @@ type Lease = {
     } | null;
 };
 
-type AIInsight = {
-    type: 'risk' | 'opportunity' | 'status';
-    title: string;
-    value: string;
-    description: string;
-    icon: any;
-    color: string;
-};
-
 export default function TenantsPage() {
     const [leases, setLeases] = useState<Lease[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [showAI, setShowAI] = useState(false);
-    const [insights, setInsights] = useState<AIInsight[]>([]);
-    const [isAnalyzing, setIsAnalyzing] = useState(false);
 
     const supabase = useMemo(() => createClient(), []);
 
@@ -80,52 +67,6 @@ export default function TenantsPage() {
         fetchTenants();
     }, [fetchTenants]);
 
-    const runAIAnalysis = async () => {
-        if (showAI) {
-            setShowAI(false);
-            return;
-        }
-
-        setIsAnalyzing(true);
-        setShowAI(true);
-
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
-
-        // Mock Logic for Demo
-        const expiringSoon = leases.filter(l => {
-            const end = new Date(l.end_date);
-            const now = new Date();
-            const days = (end.getTime() - now.getTime()) / (1000 * 3600 * 24);
-            return days < 60;
-        }).length;
-
-        const totalRent = leases.reduce((sum, l) => sum + l.rent_amount, 0);
-        const avgRent = leases.length > 0 ? totalRent / leases.length : 0;
-
-        const newInsights: AIInsight[] = [
-            {
-                type: 'risk',
-                title: 'Churn Risk',
-                value: `${expiringSoon} Tenants`,
-                description: 'Leases expiring in the next 60 days. Propose renewal offers now.',
-                icon: AlertCircle,
-                color: '#ef4444'
-            },
-            {
-                type: 'status',
-                title: 'Tenant Health',
-                value: '94/100',
-                description: 'Based on payment reliability and communication history.',
-                icon: ShieldCheck,
-                color: '#3b82f6'
-            }
-        ];
-
-        setInsights(newInsights);
-        setIsAnalyzing(false);
-    };
-
     if (isLoading) {
         return (
             <div className={styles.loadingState}>
@@ -145,51 +86,7 @@ export default function TenantsPage() {
                     </h1>
                     <p className={styles.subtitle}>View and manage your active lease agreements.</p>
                 </div>
-                <button
-                    className={styles.aiButton}
-                    onClick={runAIAnalysis}
-                >
-                    <Sparkles size={18} />
-                    {showAI ? 'Hide Insights' : 'AI Analysis'}
-                </button>
             </header>
-
-            <AnimatePresence>
-                {showAI && (
-                    <motion.div
-                        initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-                        animate={{ opacity: 1, height: 'auto', marginBottom: '2rem' }}
-                        exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-                        style={{ overflow: 'hidden' }}
-                    >
-                        <div className={styles.aiPanel}>
-                            {isAnalyzing ? (
-                                <div style={{ gridColumn: '1/-1', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', gap: '1rem', color: '#6d28d9' }}>
-                                    <Loader2 className="animate-spin" />
-                                    <span>Analyzing tenant data and lease histories...</span>
-                                </div>
-                            ) : (
-                                insights.map((insight, index) => (
-                                    <motion.div
-                                        key={index}
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: index * 0.1 }}
-                                        className={styles.insightCard}
-                                    >
-                                        <div className={styles.insightHeader} style={{ color: insight.color }}>
-                                            <insight.icon size={16} />
-                                            {insight.title}
-                                        </div>
-                                        <div className={styles.insightValue}>{insight.value}</div>
-                                        <div className={styles.insightDesc}>{insight.description}</div>
-                                    </motion.div>
-                                ))
-                            )}
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
 
             <div className={styles.tableWrapper}>
                 <table className={styles.table}>

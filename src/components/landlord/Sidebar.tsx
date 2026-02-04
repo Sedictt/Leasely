@@ -10,14 +10,14 @@ import {
     LogOut,
     Map,
     Building,
-    Sparkles,
     BarChart3,
     Receipt,
     CheckSquare,
     Wallet,
     HelpCircle,
     Globe,
-    Bell
+    Bell,
+    Wrench
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -112,6 +112,12 @@ export default function Sidebar() {
                         href="/landlord/inquiries"
                         active={isActive("/landlord/inquiries")}
                         badge={newInquiriesCount}
+                    />
+                    <NavItem
+                        icon={<Wrench size={20} />}
+                        label="Maintenance"
+                        href="/landlord/maintenance"
+                        active={isActive("/landlord/maintenance")}
                     />
                     <NavItem
                         icon={<BarChart3 size={20} />}
