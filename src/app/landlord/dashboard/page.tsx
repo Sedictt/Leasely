@@ -161,7 +161,7 @@ export default function LandlordDashboard() {
                 {/* Recent Inquiries */}
                 <div className={styles.card}>
                     <div className={styles.cardHeader}>
-                        <h2 className={styles.cardTitle}>Recent Inquiries</h2>
+                        <h2 className={styles.cardTitle}>Recent Requests</h2>
                         <div className={styles.cardActions}>
                             <button className={styles.textBtn}>View all</button>
                         </div>

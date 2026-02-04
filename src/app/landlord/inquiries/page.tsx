@@ -104,7 +104,7 @@ export default function InquiriesPage() {
     async function handleStartChat(inquiry: Inquiry) {
         if (!inquiry.user_id) {
             // Fallback for old data or edge cases
-            alert("This inquiry comes from a guest user who cannot be messaged directly via chat. Please reply via email.");
+            alert("This request comes from a guest user who cannot be messaged directly via chat. Please reply via email.");
             return;
         }
 
@@ -147,13 +147,18 @@ export default function InquiriesPage() {
             conversation = newConv;
         }
 
-        // Mark inquiry as replied automatically
+        // Mark request as replied automatically
         if (inquiry.status !== 'replied') {
             await updateInquiryStatus(inquiry.id, 'replied');
         }
 
         // Redirect to messages
-        router.push(`/landlord/messages?id=${conversation.id}`);
+        if (conversation && conversation.id) {
+            router.push(`/landlord/messages?id=${conversation.id}`);
+        } else {
+            console.error("Failed to retrieve or create conversation");
+            alert("Error: Could not start chat. Please try again.");
+        }
     }
 
     const filteredInquiries = statusFilter === 'all'
@@ -198,7 +203,7 @@ export default function InquiriesPage() {
             <div className={styles.container}>
                 <div className={styles.loading}>
                     <div className={styles.spinner}></div>
-                    <p>Loading inquiries...</p>
+                    <p>Loading requests...</p>
                 </div>
             </div>
         );
@@ -208,7 +213,7 @@ export default function InquiriesPage() {
         <div className={styles.container}>
             <div className={styles.sidebar}>
                 <div className={styles.header}>
-                    <h1 className={styles.title}>Inquiries</h1>
+                    <h1 className={styles.title}>Rental Requests</h1>
                     <div className={styles.filterBar}>
                         {(['all', 'new', 'read', 'replied', 'archived'] as const).map((filter) => (
                             <button
@@ -231,8 +236,8 @@ export default function InquiriesPage() {
                             <div className={styles.emptyIcon}>
                                 <Mail size={32} />
                             </div>
-                            <h3>No {statusFilter !== 'all' ? statusFilter : ''} inquiries</h3>
-                            <p>Inquiries from potential tenants will appear here</p>
+                            <h3>No {statusFilter !== 'all' ? statusFilter : ''} requests</h3>
+                            <p>Requests from potential tenants will appear here</p>
                         </div>
                     ) : (
                         filteredInquiries.map(inquiry => (
@@ -283,7 +288,7 @@ export default function InquiriesPage() {
                                 <div className={styles.detailTitle}>
                                     <h2>{selectedInquiry.name}</h2>
                                     <span className={styles.detailSubtitle}>
-                                        Interested in {selectedInquiry.listing?.title}
+                                        Request for {selectedInquiry.listing?.title}
                                     </span>
                                 </div>
                                 <div className={styles.detailActions}>
@@ -310,7 +315,7 @@ export default function InquiriesPage() {
                                         <button
                                             className={styles.actionBtnSecondary}
                                             onClick={() => updateInquiryStatus(selectedInquiry.id, 'archived')}
-                                            title="Archive Inquiry"
+                                            title="Archive Request"
                                         >
                                             <Archive size={18} />
                                         </button>
@@ -386,7 +391,7 @@ export default function InquiriesPage() {
                                             <MapPin size={24} />
                                         </div>
                                         <div className={styles.propertyInfo}>
-                                            <label>Inquiry for</label>
+                                            <label>Request for</label>
                                             <h4>{selectedInquiry.listing?.title}</h4>
                                             <p>{selectedInquiry.listing?.display_address}, {selectedInquiry.listing?.city}</p>
                                         </div>
@@ -400,8 +405,8 @@ export default function InquiriesPage() {
                         <div className={styles.emptyIllustration}>
                             <Mail size={64} />
                         </div>
-                        <h3>Select an inquiry</h3>
-                        <p>Choose an inquiry from the list to view details and respond.</p>
+                        <h3>Select a request</h3>
+                        <p>Choose a request from the list to view details and respond.</p>
                     </div>
                 )}
             </div>

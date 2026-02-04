@@ -238,7 +238,7 @@ export default function LandlordLayout({
                                                     </div>
                                                     <div className={styles.notifContent}>
                                                         <p className={styles.notifTitle}>
-                                                            {inquiry.status === 'new' ? 'New inquiry' : 'Inquiry'} from {inquiry.name}
+                                                            {inquiry.status === 'new' ? 'New request' : 'Request'} from {inquiry.name}
                                                         </p>
                                                         <p className={styles.notifText}>
                                                             {inquiry.listing?.title || 'Property'}
@@ -264,7 +264,7 @@ export default function LandlordLayout({
                                             className={styles.viewAllBtn}
                                             onClick={() => setShowNotifications(false)}
                                         >
-                                            View All Inquiries
+                                            View All Requests
                                         </Link>
                                     )}
                                 </div>

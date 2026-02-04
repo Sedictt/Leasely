@@ -57,7 +57,7 @@ function mapDbStatusToUi(status: string, readOnly: boolean = false): Unit['statu
     return 'vacant';
 }
 
-export default function VisualBuilder({ propertyId, initialUnits = [], readOnly = false }: { propertyId: string, initialUnits?: InitialUnit[], readOnly?: boolean }) {
+export default function VisualBuilder({ propertyId, initialUnits = [], readOnly = false, onUnitClick }: { propertyId: string, initialUnits?: InitialUnit[], readOnly?: boolean, onUnitClick?: (unit: InitialUnit) => void }) {
     const [units, setUnits] = useState<Unit[]>(initialUnits.map((u) => ({
         id: u.id,
         type: u.unit_type as UnitType,
@@ -282,7 +282,15 @@ export default function VisualBuilder({ propertyId, initialUnits = [], readOnly 
                         transformOrigin: '0 0',
                         position: 'relative',
                     }}>
-                        <CanvasContent units={units} ghost={ghostState} activeId={activeId} readOnly={readOnly} />
+                        <CanvasContent units={units} ghost={ghostState} activeId={activeId} readOnly={readOnly} onUnitClick={onUnitClick ? (u) => onUnitClick({
+                            id: u.id,
+                            unit_type: u.type,
+                            grid_x: u.gridX,
+                            grid_y: u.gridY,
+                            status: u.status,
+                            unit_number: u.unitNumber,
+                            rent_amount: u.rentAmount
+                        }) : undefined} />
 
                         {/* Floor Labels */}
                         {Array.from({ length: 10 }).map((_, i) => (
@@ -343,7 +351,9 @@ export default function VisualBuilder({ propertyId, initialUnits = [], readOnly 
                             display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold',
                             transformOrigin: 'top left',
                         }}>
-                            {unitConfig[activeType].label}
+                            {activeId && units.find(u => u.id === activeId)?.unitNumber
+                                ? `UNIT ${units.find(u => u.id === activeId)?.unitNumber}`
+                                : unitConfig[activeType].label}
                         </div>
                     ) : null}
                 </DragOverlay>,
@@ -354,7 +364,7 @@ export default function VisualBuilder({ propertyId, initialUnits = [], readOnly 
     );
 }
 
-function CanvasContent({ units, ghost, activeId, readOnly }: { units: Unit[], ghost: GhostState | null, activeId: string | null, readOnly: boolean }) {
+function CanvasContent({ units, ghost, activeId, readOnly, onUnitClick }: { units: Unit[], ghost: GhostState | null, activeId: string | null, readOnly: boolean, onUnitClick?: (unit: Unit) => void }) {
     // ... (inside DraggableUnit function later in file)
     const { setNodeRef } = useDroppable({ id: 'canvas-droppable' });
     const GRID_ROWS = 10;
@@ -388,7 +398,7 @@ function CanvasContent({ units, ghost, activeId, readOnly }: { units: Unit[], gh
             {/* UNITS */}
             {units.map(unit => (
                 <div key={unit.id} style={{ opacity: unit.id === activeId ? 0.3 : 1 }}> {/* Fade out original when dragging */}
-                    <DraggableUnit unit={unit} totalRows={GRID_ROWS} readOnly={readOnly} />
+                    <DraggableUnit unit={unit} totalRows={GRID_ROWS} readOnly={readOnly} onClick={onUnitClick ? () => onUnitClick(unit) : undefined} />
                 </div>
             ))}
         </div>
@@ -449,7 +459,7 @@ function SidebarUnit({ type, label, icon }: { type: UnitType, label: string, ico
 }
 
 // ... (DraggableUnit props remain)
-function DraggableUnit({ unit, totalRows, readOnly }: { unit: Unit, totalRows: number, readOnly: boolean }) {
+function DraggableUnit({ unit, totalRows, readOnly, onClick }: { unit: Unit, totalRows: number, readOnly: boolean, onClick?: () => void }) {
     const { attributes, listeners, setNodeRef } = useDraggable({
         id: unit.id,
         data: { type: unit.type, isPreset: false },
@@ -484,8 +494,13 @@ function DraggableUnit({ unit, totalRows, readOnly }: { unit: Unit, totalRows: n
     return (
         <div ref={setNodeRef} style={{
             position: 'absolute', top: pixelY, left: pixelX, width, height: UNIT_HEIGHT,
-            zIndex: 10, cursor: readOnly ? 'default' : 'grab', boxSizing: 'border-box',
-        }} {...listeners} {...attributes}>
+            zIndex: 10, cursor: readOnly ? (onClick ? 'pointer' : 'default') : 'grab', boxSizing: 'border-box',
+        }} {...listeners} {...attributes} onClick={(e) => {
+            if (readOnly && onClick) {
+                e.stopPropagation(); // Prevent drag/other events if needed
+                onClick();
+            }
+        }}>
 
             {/* Main Container */}
             <div style={{
@@ -543,12 +558,24 @@ function DraggableUnit({ unit, totalRows, readOnly }: { unit: Unit, totalRows: n
                     {isStairs && <div style={{ position: 'absolute', inset: 0, opacity: 0.3, backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, #000 10px, #000 20px)' }}></div>}
 
                     {/* Top Label */}
-                    <div style={{
-                        alignSelf: 'flex-start',
-                        background: 'rgba(0,0,0,0.5)', padding: '2px 6px', borderRadius: 4,
-                        fontSize: '0.6rem', color: '#94a3b8', fontWeight: 600, border: '1px solid rgba(255,255,255,0.1)'
-                    }}>
-                        {unitConfig[unit.type].label.toUpperCase()}
+                    {/* Top Label & Unit Number */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%', zIndex: 5 }}>
+                        <div style={{
+                            background: 'rgba(0,0,0,0.5)', padding: '2px 6px', borderRadius: 4,
+                            fontSize: '0.6rem', color: '#94a3b8', fontWeight: 600, border: '1px solid rgba(255,255,255,0.1)'
+                        }}>
+                            {unitConfig[unit.type].label.toUpperCase()}
+                        </div>
+                        {unit.unitNumber && (
+                            <div style={{
+                                background: 'rgba(59, 130, 246, 0.9)', padding: '2px 6px', borderRadius: 4,
+                                fontSize: '0.75rem', color: 'white', fontWeight: 700,
+                                boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+                                border: '1px solid rgba(96, 165, 250, 0.5)'
+                            }}>
+                                {unit.unitNumber}
+                            </div>
+                        )}
                     </div>
 
                     {/* Tenant / Status / Maintenance - SIMPLIFIED FOR READ ONLY */}

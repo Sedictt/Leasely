@@ -109,7 +109,7 @@ export default function Sidebar() {
                     />
                     <NavItem
                         icon={<Bell size={20} />}
-                        label="Inquiries"
+                        label="Requests"
                         href="/landlord/inquiries"
                         active={isActive("/landlord/inquiries")}
                         badge={newInquiriesCount}

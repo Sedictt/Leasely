@@ -21,7 +21,14 @@ import {
     AlertCircle,
     LayoutTemplate,
     Maximize2,
-    Minimize2
+    Minimize2,
+    PawPrint,
+    Cigarette,
+    Ban,
+    Clock3,
+    Ghost,
+    ChevronDown,
+    Key
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import VisualBuilder from "@/components/landlord/VisualBuilder";
@@ -53,6 +60,14 @@ type ListingData = {
     contact_phone: string | null;
     show_phone: boolean;
     property_id: string; // Needed for blueprint
+
+    // Rules & Terms
+    pets_allowed: boolean;
+    smoking_allowed: boolean;
+    visitors_allowed: boolean;
+    curfew_time: string | null;
+    gender_restriction: string;
+    max_lease_months: number | null;
 };
 
 type UnitData = {
@@ -81,6 +96,8 @@ export default function ListingDetailModal({ listingId, onClose }: ListingDetail
     const [activeTab, setActiveTab] = useState<'photos' | 'blueprint'>('photos');
     const [isExpanded, setIsExpanded] = useState(false);
     const [units, setUnits] = useState<UnitData[]>([]);
+    const [selectedUnit, setSelectedUnit] = useState<string | null>(null);
+    const [isUnitDropdownOpen, setIsUnitDropdownOpen] = useState(false);
 
     // Inquiry form state
     const [showInquiryForm, setShowInquiryForm] = useState(false);
@@ -105,7 +122,8 @@ export default function ListingDetailModal({ listingId, onClose }: ListingDetail
                 .select(`
                     id, title, headline, description, property_type, available_units,
                     price_range_min, price_range_max, price_display,
-                    deposit_months, advance_months, min_lease_months,
+                    deposit_months, advance_months, min_lease_months, max_lease_months,
+                    pets_allowed, smoking_allowed, visitors_allowed, curfew_time, gender_restriction,
                     display_address, city, contact_phone, show_phone, property_id,
                     listing_photos (id, url, caption, is_primary),
                     listing_amenities (amenities (name))
@@ -172,6 +190,13 @@ export default function ListingDetailModal({ listingId, onClose }: ListingDetail
         setCurrentPhotoIndex(prev => (prev === 0 ? listing.listing_photos.length - 1 : prev - 1));
     };
 
+    const handleUnitClick = (unit: any) => {
+        if (!unit.unit_number) return;
+
+        setSelectedUnit(unit.unit_number);
+        setShowInquiryForm(true);
+    };
+
     const handleInquirySubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
@@ -187,6 +212,10 @@ export default function ListingDetailModal({ listingId, onClose }: ListingDetail
             const { data: { user } } = await supabase.auth.getUser();
 
             // Submit inquiry
+            const finalMessage = selectedUnit
+                ? `[Interested in Unit: ${selectedUnit}] ${inquiryForm.message}`
+                : inquiryForm.message;
+
             const { error } = await supabase
                 .from('listing_inquiries')
                 .insert({
@@ -194,7 +223,7 @@ export default function ListingDetailModal({ listingId, onClose }: ListingDetail
                     name: inquiryForm.name.trim(),
                     email: inquiryForm.email.trim(),
                     phone: inquiryForm.phone.trim() || null,
-                    message: inquiryForm.message.trim(),
+                    message: finalMessage,
                     preferred_move_in: inquiryForm.preferred_move_in || null,
                     user_id: user?.id || null
                 });
@@ -330,6 +359,7 @@ export default function ListingDetailModal({ listingId, onClose }: ListingDetail
                                         propertyId={listing?.property_id || ''}
                                         initialUnits={units}
                                         readOnly={true}
+                                        onUnitClick={handleUnitClick}
                                     />
                                 </div>
                             )}
@@ -401,6 +431,64 @@ export default function ListingDetailModal({ listingId, onClose }: ListingDetail
                                         </div>
                                     )}
 
+                                    {/* House Rules & Terms */}
+                                    <div className={styles.section}>
+                                        <h3 className={styles.sectionTitle}>House Rules & Terms</h3>
+                                        <div className={styles.rulesGrid}>
+                                            {/* Pets */}
+                                            <div className={`${styles.ruleItem} ${listing?.pets_allowed ? styles.allowed : styles.notAllowed}`}>
+                                                <PawPrint size={18} />
+                                                <span>{listing?.pets_allowed ? 'Pets Allowed' : 'No Pets'}</span>
+                                            </div>
+
+                                            {/* Smoking */}
+                                            <div className={`${styles.ruleItem} ${listing?.smoking_allowed ? styles.allowed : styles.notAllowed}`}>
+                                                <div className={styles.iconContainer}>
+                                                    <Cigarette size={18} />
+                                                    {!listing?.smoking_allowed && <Ban size={14} className={styles.banOverlay} />}
+                                                </div>
+                                                <span>{listing?.smoking_allowed ? 'Smoking Allowed' : 'No Smoking'}</span>
+                                            </div>
+
+                                            {/* Visitors */}
+                                            <div className={`${styles.ruleItem} ${listing?.visitors_allowed ? styles.allowed : styles.notAllowed}`}>
+                                                <Users size={18} />
+                                                <span>{listing?.visitors_allowed ? 'Visitors Allowed' : 'No Visitors'}</span>
+                                            </div>
+
+                                            {/* Curfew */}
+                                            {listing?.curfew_time && (
+                                                <div className={styles.ruleItem}>
+                                                    <Clock3 size={18} />
+                                                    <span>Curfew: {listing.curfew_time}</span>
+                                                </div>
+                                            )}
+
+                                            {/* Gender Restriction */}
+                                            {listing?.gender_restriction !== 'none' && (
+                                                <div className={styles.ruleItem}>
+                                                    <User size={18} />
+                                                    <span style={{ textTransform: 'capitalize' }}>
+                                                        {listing?.gender_restriction?.replace('_', ' ')}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className={styles.termsRow}>
+                                            <div className={styles.termTag}>
+                                                <span className={styles.termLabel}>Advance:</span>
+                                                <span className={styles.termValue}>{listing?.advance_months} months</span>
+                                            </div>
+                                            {listing?.max_lease_months && (
+                                                <div className={styles.termTag}>
+                                                    <span className={styles.termLabel}>Max Lease:</span>
+                                                    <span className={styles.termValue}>{listing.max_lease_months} months</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
                                     {/* Sticky Footer Action */}
                                     <div className={styles.footerAction}>
                                         <div className={styles.priceBlock}>
@@ -413,8 +501,8 @@ export default function ListingDetailModal({ listingId, onClose }: ListingDetail
                                             className={styles.bookBtn}
                                             onClick={() => setShowInquiryForm(true)}
                                         >
-                                            Inquire Now
-                                            <MessageCircle size={20} />
+                                            Request to Rent
+                                            <Key size={20} />
                                         </button>
                                     </div>
                                 </>
@@ -424,39 +512,54 @@ export default function ListingDetailModal({ listingId, onClose }: ListingDetail
                                     {!inquiryForm.email ? (
                                         /* LOGIN REQUIRED STATE */
                                         <div className={styles.loginRequired}>
-                                            <div className={styles.loginHeader}>
-                                                <button
-                                                    className={styles.backBtn}
-                                                    onClick={() => setShowInquiryForm(false)}
-                                                >
-                                                    <ChevronLeft size={20} />
-                                                    Back
-                                                </button>
-                                            </div>
-
-                                            <div className={styles.loginContent}>
-                                                <User size={64} className={styles.loginIcon} />
-                                                <h3>Log in to Inquire</h3>
-                                                <p>To ensure trust and safety, you need an account to message landlords. It takes less than a minute!</p>
-
-                                                <div className={styles.loginActions}>
-                                                    <a href={`/login?redirect=/tenant/search`} className={styles.primaryLoginBtn}>
-                                                        Log In / Sign Up
-                                                    </a>
+                                            <div className={styles.loginCard}>
+                                                <div className={styles.loginHeader}>
+                                                    <div className={styles.loginIconWrapper}>
+                                                        <Key size={32} />
+                                                    </div>
                                                     <button
-                                                        className={styles.secondaryLoginBtn}
+                                                        className={styles.closeLoginBtn}
                                                         onClick={() => setShowInquiryForm(false)}
                                                     >
-                                                        Cancel
+                                                        <X size={20} />
                                                     </button>
+                                                </div>
+
+                                                <div className={styles.loginContent}>
+                                                    <h3>Log in to Request</h3>
+                                                    <p>Connect with landlords securely. Creating an account takes less than a minute.</p>
+
+                                                    <div className={styles.loginActions}>
+                                                        <a href={`/login?redirect=/tenant/search`} className={styles.primaryLoginBtn}>
+                                                            <User size={18} />
+                                                            Log In / Sign Up
+                                                        </a>
+                                                        <button
+                                                            className={styles.secondaryLoginBtn}
+                                                            onClick={() => setShowInquiryForm(false)}
+                                                        >
+                                                            Maybe Later
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     ) : inquirySuccess ? (
                                         <div className={styles.successMessage}>
-                                            <CheckCircle2 size={48} color="var(--success)" />
-                                            <h3>Inquiry Sent!</h3>
-                                            <p>The landlord will get back to you soon via email.</p>
+                                            <div className={styles.successIconWrapper}>
+                                                <CheckCircle2 size={48} />
+                                            </div>
+                                            <h3>Request Sent!</h3>
+                                            <p>Your rental request has been sent to the landlord. You will be notified via email when they respond.</p>
+                                            <button
+                                                className={styles.backToPropertyBtn}
+                                                onClick={() => {
+                                                    setShowInquiryForm(false);
+                                                    setInquirySuccess(false);
+                                                }}
+                                            >
+                                                Back to Property
+                                            </button>
                                         </div>
                                     ) : (
                                         <>
@@ -468,8 +571,10 @@ export default function ListingDetailModal({ listingId, onClose }: ListingDetail
                                                     <ChevronLeft size={20} />
                                                     Back
                                                 </button>
-                                                <h3>Send an Inquiry</h3>
-                                                <p>Interested in <strong>{listing?.title}</strong>? Send a message to the landlord.</p>
+                                                <div className={styles.headerTitleBlock}>
+                                                    <h3>Request to Rent</h3>
+                                                    <p>Send a request to secure this unit</p>
+                                                </div>
                                             </div>
 
                                             {inquiryError && (
@@ -480,75 +585,155 @@ export default function ListingDetailModal({ listingId, onClose }: ListingDetail
                                             )}
 
                                             <form onSubmit={handleInquirySubmit} className={styles.inquiryForm}>
-                                                <div className={styles.formRow}>
-                                                    <div className={styles.formGroup}>
-                                                        <label>
-                                                            <User size={16} />
-                                                            Full Name *
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Your full name"
-                                                            value={inquiryForm.name}
-                                                            onChange={(e) => setInquiryForm(f => ({ ...f, name: e.target.value }))}
-                                                            required
-                                                            readOnly // Name is read-only since it triggers from account
-                                                        />
+                                                {/* Selected Unit Card */}
+                                                {selectedUnit && (
+                                                    <div className={styles.selectedUnitCard}>
+                                                        <div className={styles.unitCardIcon}>
+                                                            <LayoutTemplate size={18} />
+                                                        </div>
+                                                        <div className={styles.unitCardInfo}>
+                                                            <span className={styles.unitCardLabel}>Inquiring about</span>
+                                                            <span className={styles.unitCardValue}>Unit {selectedUnit}</span>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            className={styles.clearUnitBtn}
+                                                            onClick={() => setSelectedUnit(null)}
+                                                        >
+                                                            <X size={14} />
+                                                        </button>
                                                     </div>
-                                                    <div className={styles.formGroup}>
-                                                        <label>
-                                                            <Mail size={16} />
-                                                            Email Address *
-                                                        </label>
-                                                        <input
-                                                            type="email"
-                                                            placeholder="your@email.com"
-                                                            value={inquiryForm.email}
-                                                            onChange={(e) => setInquiryForm(f => ({ ...f, email: e.target.value }))}
-                                                            required
-                                                            readOnly // Email is read-only
-                                                        />
+                                                )}
+
+                                                <div className={styles.formRow}>
+                                                    <div className={styles.inputGroup}>
+                                                        <label>Full Name</label>
+                                                        <div className={styles.inputWrapper}>
+                                                            <User size={18} className={styles.inputIcon} />
+                                                            <input
+                                                                type="text"
+                                                                value={inquiryForm.name}
+                                                                readOnly
+                                                                className={styles.inputField}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <div className={styles.inputGroup}>
+                                                        <label>Email Address</label>
+                                                        <div className={styles.inputWrapper}>
+                                                            <Mail size={18} className={styles.inputIcon} />
+                                                            <input
+                                                                type="email"
+                                                                value={inquiryForm.email}
+                                                                readOnly
+                                                                className={styles.inputField}
+                                                            />
+                                                        </div>
                                                     </div>
                                                 </div>
 
                                                 <div className={styles.formRow}>
-                                                    <div className={styles.formGroup}>
-                                                        <label>
-                                                            <Phone size={16} />
-                                                            Phone (Optional)
-                                                        </label>
-                                                        <input
-                                                            type="tel"
-                                                            placeholder="+63 9XX XXX XXXX"
-                                                            value={inquiryForm.phone}
-                                                            onChange={(e) => setInquiryForm(f => ({ ...f, phone: e.target.value }))}
-                                                        />
+                                                    <div className={styles.inputGroup}>
+                                                        <label>Phone Number <span className={styles.optionalLabel}>(Optional)</span></label>
+                                                        <div className={styles.inputWrapper}>
+                                                            <Phone size={18} className={styles.inputIcon} />
+                                                            <input
+                                                                type="tel"
+                                                                placeholder="+63 9XX XXX XXXX"
+                                                                value={inquiryForm.phone}
+                                                                onChange={(e) => setInquiryForm(f => ({ ...f, phone: e.target.value }))}
+                                                                className={styles.inputField}
+                                                            />
+                                                        </div>
                                                     </div>
-                                                    <div className={styles.formGroup}>
-                                                        <label>
-                                                            <Calendar size={16} />
-                                                            Preferred Move-in
-                                                        </label>
-                                                        <input
-                                                            type="date"
-                                                            value={inquiryForm.preferred_move_in}
-                                                            onChange={(e) => setInquiryForm(f => ({ ...f, preferred_move_in: e.target.value }))}
-                                                        />
+                                                    <div className={styles.inputGroup}>
+                                                        <label>Move-in Date <span className={styles.optionalLabel}>(Preferred)</span></label>
+                                                        <div className={styles.inputWrapper}>
+                                                            <input
+                                                                type="date"
+                                                                value={inquiryForm.preferred_move_in}
+                                                                onChange={(e) => setInquiryForm(f => ({ ...f, preferred_move_in: e.target.value }))}
+                                                                className={`${styles.inputField} ${styles.dateInput}`}
+                                                            />
+                                                        </div>
                                                     </div>
                                                 </div>
 
-                                                <div className={styles.formGroup}>
-                                                    <label>
-                                                        <MessageCircle size={16} />
-                                                        Your Message *
-                                                    </label>
-                                                    <textarea
-                                                        placeholder="Hi, I'm interested in this property. I would like to schedule a viewing..."
-                                                        rows={4}
-                                                        value={inquiryForm.message}
-                                                        onChange={(e) => setInquiryForm(f => ({ ...f, message: e.target.value }))}
-                                                        required
-                                                    />
+                                                {!selectedUnit && (
+                                                    <div className={styles.inputGroup}>
+                                                        <label>Specific Unit <span className={styles.optionalLabel}>(Optional)</span></label>
+                                                        <div
+                                                            className={`${styles.customSelectWrapper} ${isUnitDropdownOpen ? styles.active : ''}`}
+                                                            onClick={() => setIsUnitDropdownOpen(!isUnitDropdownOpen)}
+                                                        >
+                                                            <div className={styles.customSelectTrigger}>
+                                                                <LayoutTemplate size={18} className={styles.inputIcon} />
+                                                                <span className={selectedUnit ? styles.selectedValue : styles.placeholder}>
+                                                                    {selectedUnit
+                                                                        ? `Unit ${selectedUnit}`
+                                                                        : "Any / No Preference"
+                                                                    }
+                                                                </span>
+                                                                <ChevronDown size={16} className={styles.chevron} />
+                                                            </div>
+
+                                                            {isUnitDropdownOpen && (
+                                                                <div className={styles.customSelectDropdown} onClick={(e) => e.stopPropagation()}>
+                                                                    <div
+                                                                        className={styles.customOption}
+                                                                        onClick={() => {
+                                                                            setSelectedUnit(null);
+                                                                            setIsUnitDropdownOpen(false);
+                                                                        }}
+                                                                    >
+                                                                        <div className={styles.optionContent}>
+                                                                            <span className={styles.optionTitle}>Any / No Preference</span>
+                                                                            <span className={styles.optionSubtitle}>I'm open to any available unit</span>
+                                                                        </div>
+                                                                        {!selectedUnit && <Check size={16} className={styles.checkIcon} />}
+                                                                    </div>
+
+                                                                    {units
+                                                                        .filter(u => u.status === 'vacant' || u.status === 'available')
+                                                                        .map(u => (
+                                                                            <div
+                                                                                key={u.id}
+                                                                                className={`${styles.customOption} ${selectedUnit === u.unit_number ? styles.selected : ''}`}
+                                                                                onClick={() => {
+                                                                                    if (u.unit_number) {
+                                                                                        setSelectedUnit(u.unit_number);
+                                                                                        setIsUnitDropdownOpen(false);
+                                                                                    }
+                                                                                }}
+                                                                            >
+                                                                                <div className={styles.optionContent}>
+                                                                                    <span className={styles.optionTitle}>Unit {u.unit_number}</span>
+                                                                                    <span className={styles.optionSubtitle}>
+                                                                                        {u.rent_amount ? `₱${u.rent_amount.toLocaleString()}/mo` : 'Price on Request'}
+                                                                                    </span>
+                                                                                </div>
+                                                                                {selectedUnit === u.unit_number && <Check size={16} className={styles.checkIcon} />}
+                                                                            </div>
+                                                                        ))
+                                                                    }
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                <div className={styles.inputGroup}>
+                                                    <label>Message</label>
+                                                    <div className={`${styles.inputWrapper} ${styles.textareaWrapper}`}>
+                                                        <textarea
+                                                            placeholder="Hi, I'm interested in this property..."
+                                                            rows={4}
+                                                            value={inquiryForm.message}
+                                                            onChange={(e) => setInquiryForm(f => ({ ...f, message: e.target.value }))}
+                                                            required
+                                                            className={styles.textareaField}
+                                                        />
+                                                    </div>
                                                 </div>
 
                                                 <button
@@ -560,8 +745,8 @@ export default function ListingDetailModal({ listingId, onClose }: ListingDetail
                                                         <Loader2 size={20} className={styles.spinner} />
                                                     ) : (
                                                         <>
+                                                            <span>Send Request</span>
                                                             <Send size={18} />
-                                                            Send Inquiry
                                                         </>
                                                     )}
                                                 </button>
@@ -648,6 +833,7 @@ export default function ListingDetailModal({ listingId, onClose }: ListingDetail
                                 propertyId={listing?.property_id || ''}
                                 initialUnits={units}
                                 readOnly={true}
+                                onUnitClick={handleUnitClick}
                             />
                         )}
                     </div>

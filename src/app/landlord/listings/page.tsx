@@ -239,7 +239,7 @@ export default function ListingsPage() {
                         <div className={`${styles.statIcon} ${styles.blue}`}><Users size={20} /></div>
                         <div className={styles.statInfo}>
                             <span className={styles.statValue}>{stats.totalInquiries}</span>
-                            <span className={styles.statLabel}>Inquiries</span>
+                            <span className={styles.statLabel}>Requests</span>
                         </div>
                     </div>
                 </div>
@@ -453,7 +453,7 @@ function ListingCard({
                     </div>
                     <div className={styles.stat}>
                         <Users size={14} />
-                        <span>{listing.inquiry_count} Inquiries</span>
+                        <span>{listing.inquiry_count} Requests</span>
                     </div>
                 </div>
 
