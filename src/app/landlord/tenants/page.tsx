@@ -2,7 +2,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Users, Search, Sparkles, TrendingUp, AlertCircle, CalendarClock, ShieldCheck } from "lucide-react";
+import { Loader2, Users, Search, Sparkles, AlertCircle, CalendarClock, ShieldCheck } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import styles from "./tenants.module.css";
 import { motion, AnimatePresence } from "framer-motion";
@@ -111,14 +111,6 @@ export default function TenantsPage() {
                 description: 'Leases expiring in the next 60 days. Propose renewal offers now.',
                 icon: AlertCircle,
                 color: '#ef4444'
-            },
-            {
-                type: 'opportunity',
-                title: 'Revenue Potential',
-                value: `+5-10%`,
-                description: 'Market analysis suggests room for rent increase in 3 units.',
-                icon: TrendingUp,
-                color: '#10b981'
             },
             {
                 type: 'status',

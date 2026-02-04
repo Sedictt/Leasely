@@ -17,7 +17,6 @@ import {
     Wallet,
     HelpCircle,
     Globe,
-    Bot,
     Bell
 } from "lucide-react";
 import Link from "next/link";
@@ -139,12 +138,6 @@ export default function Sidebar() {
                         label="Finances"
                         href="/landlord/finances"
                         active={isActive("/landlord/finances")}
-                    />
-                    <NavItem
-                        icon={<Bot size={20} />}
-                        label="AI Lease Agent"
-                        href="/landlord/lease-ai"
-                        active={isActive("/landlord/lease-ai")}
                     />
                 </div>
 

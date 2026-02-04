@@ -52,7 +52,6 @@ This is a full-featured dashboard for property owners and managers to run their 
 | **Invoice & Finance Tracking** | Generate invoices, record payments, and monitor the financial health of each property. |
 | **Visual Blueprint Planner** | A drag-and-drop tool to visualize your property's floor plan and unit layout. |
 | **Statistics & Reports** | Analyze trends in occupancy, revenue, and other key performance indicators over time. |
-| **🤖 AI Lease Agent** | AI-powered lease management: calculates early termination penalties, generates professional email responses, tracks renewal alerts with market-based rent suggestions, and parses contract PDFs. |
 
 ---
 
