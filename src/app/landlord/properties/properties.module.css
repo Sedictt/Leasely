@@ -194,3 +194,23 @@
     outline: 2px solid var(--primary);
     border-color: transparent;
 }
+
+.conciergeBtn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.conciergeBtn:hover {
+    background: #dcfce7;
+    border-color: #86efac;
+}

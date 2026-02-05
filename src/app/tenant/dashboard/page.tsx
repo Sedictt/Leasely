@@ -18,7 +18,9 @@ import {
     Bell,
     ChevronRight,
     MapPin,
-    Users
+    Users,
+    Bot,
+    Sparkles
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -380,6 +382,12 @@ export default function TenantDashboard() {
                                     <MessageSquare size={20} />
                                 </div>
                                 <span className={styles.actionBtnLabel}>Messages</span>
+                            </button>
+                            <button className={styles.actionBtn} onClick={() => router.push('/tenant/concierge')}>
+                                <div className={`${styles.actionBtnIcon} ${styles.purpleIcon}`}>
+                                    <Bot size={20} />
+                                </div>
+                                <span className={styles.actionBtnLabel}>AI Assistant</span>
                             </button>
                         </div>
                     </div>
