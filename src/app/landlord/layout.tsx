@@ -79,12 +79,13 @@ export default function LandlordLayout({
                 .eq('status', 'new');
 
             if (countError) {
-                console.error('Error fetching inquiry count:');
-                console.error('Message:', countError.message);
-                console.error('Code:', countError.code);
-                console.error('Details:', countError.details);
+                // Suppress verbose logging for network errors
+                if (countError.message && (countError.message.includes('NetworkError') || countError.message.includes('fetch'))) {
+                    console.warn('Network/Fetch error checking notifications (retrying soon)');
+                } else {
+                    console.error('Error fetching inquiry count:', countError.message);
+                }
             } else {
-                console.log('📬 New inquiries count:', count);
                 setNewInquiriesCount(count || 0);
             }
 
@@ -103,12 +104,12 @@ export default function LandlordLayout({
                 .limit(5);
 
             if (inquiriesError) {
-                console.error('Error fetching recent inquiries:');
-                console.error('Message:', inquiriesError.message);
-                console.error('Code:', inquiriesError.code);
-                console.error('Details:', inquiriesError.details);
+                if (inquiriesError.message && (inquiriesError.message.includes('NetworkError') || inquiriesError.message.includes('fetch'))) {
+                    // specific log already handled above, silent fail or minimal log
+                } else {
+                    console.error('Error fetching recent inquiries:', inquiriesError.message);
+                }
             } else {
-                console.log('📬 Recent inquiries data:', inquiries);
                 setRecentInquiries(inquiries || []);
             }
         } catch (err) {
@@ -178,7 +179,7 @@ export default function LandlordLayout({
 
     return (
         <div className={styles.layout}>
-            <Sidebar />
+            <Sidebar inquiryCount={newInquiriesCount} />
             <div className={styles.mainArea}>
                 {/* Header */}
                 <header className={styles.header}>

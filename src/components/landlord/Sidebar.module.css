@@ -81,6 +81,70 @@
 .navSection {
     padding: 0 1rem;
     margin-bottom: 0.5rem;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Add spacing between groups */
+.navSection:not(:last-child) {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.sidebar:hover .navSection {
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 0.25rem;
+}
+
+.sectionHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    overflow: hidden;
+    min-height: 44px;
+    /* Default height */
+    opacity: 1;
+    margin: 0;
+    padding: 0;
+    transition: all 0.3s ease;
+    background: transparent;
+    border: none;
+    width: 100%;
+}
+
+/* In narrow mode (not hover), HIDE the header completely to avoid clutter */
+.sidebar:not(:hover) .sectionHeader {
+    display: none;
+}
+
+.sidebar:hover .sectionHeader {
+    margin-bottom: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    min-height: auto;
+}
+
+.sectionHeaderLeft {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.sectionIcon {
+    color: rgba(255, 255, 255, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    /* Fixed width for better alignment */
+    height: 24px;
+}
+
+/* Make category icons slightly more prominent in narrow mode */
+.sidebar:not(:hover) .sectionIcon {
+    color: rgba(255, 255, 255, 0.7);
 }
 
 .sectionLabel {
@@ -90,15 +154,55 @@
     color: rgba(255, 255, 255, 0.35);
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    padding: 0.5rem 0.75rem;
-    margin-bottom: 0.25rem;
     white-space: nowrap;
     opacity: 0;
     transition: opacity 0.2s ease;
+    width: 0;
+    /* Hide in narrow mode */
+    overflow: hidden;
 }
 
 .sidebar:hover .sectionLabel {
     opacity: 1;
+    width: auto;
+}
+
+.sectionChevron {
+    color: rgba(255, 255, 255, 0.35);
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    opacity: 0;
+    /* Hidden in narrow mode */
+}
+
+.sidebar:hover .sectionChevron {
+    opacity: 1;
+}
+
+.sectionChevron.collapsed {
+    transform: rotate(-90deg);
+}
+
+.sectionContent {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition: grid-template-rows 0.3s ease;
+}
+
+.sectionContent.hidden {
+    grid-template-rows: 0fr;
+}
+
+/* When sidebar is collapsed (narrow), force content to be open/visible */
+/* This prevents items from disappearing when a category is toggled off */
+.sidebar:not(:hover) .sectionContent.hidden {
+    grid-template-rows: 1fr;
+}
+
+.sectionInner {
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
 }
 
 .navItem {

@@ -5,6 +5,7 @@ import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import styles from "./page.module.css";
 import { Mail, Phone, Calendar, MapPin, Clock, CheckCircle, Eye, Archive, FileText, MessageSquare } from "lucide-react";
+import RequestDecisionModal from "@/components/landlord/RequestDecisionModal";
 
 type Inquiry = {
     id: string;
@@ -32,6 +33,7 @@ export default function InquiriesPage() {
     const [loading, setLoading] = useState(true);
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
     const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
+    const [isDecisionModalOpen, setIsDecisionModalOpen] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -58,7 +60,9 @@ export default function InquiriesPage() {
                     listing:property_listings (
                         title,
                         display_address,
-                        city
+                        city,
+                        price_display,
+                        price_range_min
                     )
                 `)
                 .order('created_at', { ascending: false });
@@ -292,23 +296,21 @@ export default function InquiriesPage() {
                                     </span>
                                 </div>
                                 <div className={styles.detailActions}>
-                                    {/* Start Chat Button */}
                                     <button
                                         className={styles.actionBtnPrimary}
+                                        onClick={() => setIsDecisionModalOpen(true)}
+                                    >
+                                        <CheckCircle size={18} />
+                                        Review Request
+                                    </button>
+
+                                    {/* Start Chat Button */}
+                                    <button
+                                        className={styles.actionBtnSecondary}
                                         onClick={() => handleStartChat(selectedInquiry)}
                                     >
                                         <MessageSquare size={18} />
-                                        Start Chat
-                                    </button>
-
-                                    <button
-                                        className={styles.actionBtnSecondary}
-                                        onClick={() => {
-                                            alert("Lease creation wizard coming soon!");
-                                        }}
-                                    >
-                                        <FileText size={18} />
-                                        Draft Lease
+                                        Message
                                     </button>
 
                                     {selectedInquiry.status !== 'archived' && (
@@ -399,6 +401,32 @@ export default function InquiriesPage() {
                                 </div>
                             </div>
                         </div>
+
+                        <RequestDecisionModal
+                            isOpen={isDecisionModalOpen}
+                            onClose={() => setIsDecisionModalOpen(false)}
+                            onApprove={() => {
+                                handleStartChat(selectedInquiry);
+                                setIsDecisionModalOpen(false);
+                            }}
+                            onReject={() => {
+                                updateInquiryStatus(selectedInquiry.id, 'archived');
+                                setIsDecisionModalOpen(false);
+                            }}
+                            tenantName={selectedInquiry.name}
+                            tenantData={{
+                                email: selectedInquiry.email,
+                                phone: selectedInquiry.phone,
+                                moveInDate: selectedInquiry.preferred_move_in,
+                                message: selectedInquiry.message
+                            }}
+                            propertyDetails={selectedInquiry.listing ? {
+                                title: selectedInquiry.listing.title,
+                                address: selectedInquiry.listing.display_address,
+                                city: selectedInquiry.listing.city,
+                                price: (selectedInquiry.listing as any).price_display || ((selectedInquiry.listing as any).price_range_min ? `₱${(selectedInquiry.listing as any).price_range_min.toLocaleString()}` : null)
+                            } : undefined}
+                        />
                     </>
                 ) : (
                     <div className={styles.emptySelection}>

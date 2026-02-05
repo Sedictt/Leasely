@@ -17,25 +17,35 @@ import {
     HelpCircle,
     Globe,
     Bell,
-    Wrench
+    Wrench,
+    ChevronDown,
+    LayoutList,
+    Home,
+    UserCheck,
+    BadgeDollarSign,
+    LifeBuoy
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import styles from "./Sidebar.module.css";
 
-export default function Sidebar() {
+export default function Sidebar({ inquiryCount }: { inquiryCount?: number }) {
     const pathname = usePathname();
-    const [newInquiriesCount, setNewInquiriesCount] = useState(0);
+    const [internalCount, setInternalCount] = useState(0);
+
+    // Use passed prop if available, otherwise use internal state
+    const countToDisplay = inquiryCount !== undefined ? inquiryCount : internalCount;
 
     const isActive = (path: string) => pathname === path || pathname.startsWith(path + '/');
 
     useEffect(() => {
-        fetchNewInquiriesCount();
-
-        // Refresh count every 30 seconds
-        const interval = setInterval(fetchNewInquiriesCount, 30000);
-        return () => clearInterval(interval);
-    }, []);
+        // Only fetch internally if prop is not provided
+        if (inquiryCount === undefined) {
+            fetchNewInquiriesCount();
+            const interval = setInterval(fetchNewInquiriesCount, 30000);
+            return () => clearInterval(interval);
+        }
+    }, [inquiryCount]);
 
     async function fetchNewInquiriesCount() {
         try {
@@ -50,7 +60,7 @@ export default function Sidebar() {
                 .select('*', { count: 'exact', head: true })
                 .eq('status', 'new');
 
-            setNewInquiriesCount(count || 0);
+            setInternalCount(count || 0);
         } catch (err) {
             console.error('Error fetching inquiry count:', err);
         }
@@ -73,15 +83,24 @@ export default function Sidebar() {
             </div>
 
             {/* Main Menu */}
+            {/* Main Menu */}
             <nav className={styles.nav}>
-                <div className={styles.navSection}>
-                    <span className={styles.sectionLabel}>MAIN MENU</span>
+                <NavSection label="MENU" icon={<LayoutList size={16} />}>
                     <NavItem
                         icon={<LayoutDashboard size={20} />}
                         label="Dashboard"
                         href="/landlord/dashboard"
                         active={isActive("/landlord/dashboard")}
                     />
+                    <NavItem
+                        icon={<CheckSquare size={20} />}
+                        label="To Do List"
+                        href="/landlord/tasks"
+                        active={isActive("/landlord/tasks")}
+                    />
+                </NavSection>
+
+                <NavSection label="PROPERTIES" icon={<Home size={16} />}>
                     <NavItem
                         icon={<Building size={20} />}
                         label="Properties"
@@ -101,6 +120,15 @@ export default function Sidebar() {
                         active={isActive("/landlord/unit-map")}
                     />
                     <NavItem
+                        icon={<Wrench size={20} />}
+                        label="Maintenance"
+                        href="/landlord/maintenance"
+                        active={isActive("/landlord/maintenance")}
+                    />
+                </NavSection>
+
+                <NavSection label="TENANCY" icon={<UserCheck size={16} />}>
+                    <NavItem
                         icon={<Users size={20} />}
                         label="Tenants"
                         href="/landlord/tenants"
@@ -111,20 +139,16 @@ export default function Sidebar() {
                         label="Requests"
                         href="/landlord/inquiries"
                         active={isActive("/landlord/inquiries")}
-                        badge={newInquiriesCount}
+                        badge={countToDisplay}
                     />
-                    <NavItem
-                        icon={<Wrench size={20} />}
-                        label="Maintenance"
-                        href="/landlord/maintenance"
-                        active={isActive("/landlord/maintenance")}
-                    />
-                    <NavItem
-                        icon={<BarChart3 size={20} />}
-                        label="Statistics"
+                </NavSection>
 
-                        href="/landlord/statistics"
-                        active={isActive("/landlord/statistics")}
+                <NavSection label="FINANCE" icon={<BadgeDollarSign size={16} />}>
+                    <NavItem
+                        icon={<Wallet size={20} />}
+                        label="Finances"
+                        href="/landlord/finances"
+                        active={isActive("/landlord/finances")}
                     />
                     <NavItem
                         icon={<Receipt size={20} />}
@@ -134,21 +158,14 @@ export default function Sidebar() {
                         badge={1}
                     />
                     <NavItem
-                        icon={<CheckSquare size={20} />}
-                        label="To Do List"
-                        href="/landlord/tasks"
-                        active={isActive("/landlord/tasks")}
+                        icon={<BarChart3 size={20} />}
+                        label="Statistics"
+                        href="/landlord/statistics"
+                        active={isActive("/landlord/statistics")}
                     />
-                    <NavItem
-                        icon={<Wallet size={20} />}
-                        label="Finances"
-                        href="/landlord/finances"
-                        active={isActive("/landlord/finances")}
-                    />
-                </div>
+                </NavSection>
 
-                <div className={styles.navSection}>
-                    <span className={styles.sectionLabel}>HELP & SUPPORT</span>
+                <NavSection label="SUPPORT" icon={<LifeBuoy size={16} />}>
                     <NavItem
                         icon={<HelpCircle size={20} />}
                         label="Help & Center"
@@ -161,7 +178,7 @@ export default function Sidebar() {
                         href="/landlord/settings"
                         active={isActive("/landlord/settings")}
                     />
-                </div>
+                </NavSection>
             </nav>
 
             {/* Logout Button */}
@@ -204,5 +221,33 @@ function NavItem({ icon, label, active = false, href, badge }: NavItemProps) {
                 <span className={styles.badge}>{badge}</span>
             )}
         </Link>
+    );
+}
+
+function NavSection({ label, icon, children }: { label: string; icon: React.ReactNode; children: React.ReactNode }) {
+    const [isOpen, setIsOpen] = useState(true);
+
+    return (
+        <div className={styles.navSection}>
+            <button
+                className={styles.sectionHeader}
+                onClick={() => setIsOpen(!isOpen)}
+                type="button"
+            >
+                <div className={styles.sectionHeaderLeft}>
+                    <span className={styles.sectionIcon}>{icon}</span>
+                    <span className={styles.sectionLabel}>{label}</span>
+                </div>
+                <ChevronDown
+                    size={16}
+                    className={`${styles.sectionChevron} ${!isOpen ? styles.collapsed : ''}`}
+                />
+            </button>
+            <div className={`${styles.sectionContent} ${!isOpen ? styles.hidden : ''}`}>
+                <div className={styles.sectionInner}>
+                    {children}
+                </div>
+            </div>
+        </div>
     );
 }

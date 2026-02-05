@@ -1,0 +1,314 @@
+.closeBtn {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    background: #f1f5f9;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s;
+    z-index: 10;
+}
+
+.closeBtn:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+    transform: rotate(90deg);
+}
+
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(8px);
+    animation: fadeIn 0.3s ease-out;
+}
+
+.modalContent {
+    background: white;
+    border-radius: 32px;
+    padding: 40px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 20px 60px -10px rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Header Section */
+.header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.avatarContainer {
+    position: relative;
+}
+
+.avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #86efac 0%, #4ade80 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #14532d;
+    overflow: hidden;
+    border: 4px solid #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.headerInfo {
+    flex: 1;
+    padding-top: 4px;
+}
+
+.tenantName {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin-bottom: 8px;
+    line-height: 1.2;
+}
+
+.realInfo {
+    font-size: 0.9rem;
+    color: #64748b;
+    font-weight: 500;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.statusTag {
+    background: #6366f1;
+    width: 48px;
+    height: 12px;
+    border-radius: 6px;
+    position: absolute;
+    right: 0;
+    top: 8px;
+}
+
+/* Message Section */
+.messageSection {
+    background: #f8fafc;
+    padding: 16px;
+    border-radius: 16px;
+    margin-bottom: 32px;
+}
+
+.messageSection p {
+    font-size: 0.9rem;
+    color: #475569;
+    font-style: italic;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Stats Section */
+.statsSection {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 32px 0;
+    padding: 0 12px;
+}
+
+/* Calendar Widget (Revamped Date) */
+.calendarGroup {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.calendarWidget {
+    width: 52px;
+    height: 52px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px -6px rgba(244, 63, 94, 0.25);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid #ffe4e6;
+}
+
+.calendarHeader {
+    background: linear-gradient(135deg, #f43f5e 0%, #fb7185 100%);
+    /* Rose Gradient */
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.calendarBody {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #1e293b;
+    padding-bottom: 2px;
+}
+
+.statLabel {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.subLabel {
+    display: block;
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 2px;
+}
+
+/* Verified Badge */
+.verifiedBadge {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.checkCircle {
+    width: 40px;
+    height: 40px;
+    background: #2dd4bf;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: 0 4px 10px rgba(45, 212, 191, 0.3);
+}
+
+.verifiedLabel {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+/* Details Section */
+.detailsGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 40px;
+}
+
+.detailItem {
+    display: flex;
+    flex-direction: column;
+}
+
+.detailTitle {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #94a3b8;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+}
+
+.detailText {
+    font-size: 0.95rem;
+    color: #334155;
+    font-weight: 600;
+}
+
+/* Buttons */
+.folderActions {
+    display: flex;
+    gap: 16px;
+    margin-top: auto;
+}
+
+.btnApprove,
+.btnReject {
+    flex: 1;
+    padding: 16px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 800;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btnApprove {
+    background: #5664f5;
+    color: white;
+    box-shadow: 0 4px 15px rgba(86, 100, 245, 0.3);
+}
+
+.btnApprove:hover {
+    background: #4338ca;
+    transform: translateY(-2px);
+}
+
+.btnReject {
+    background: #ff8e3c;
+    color: white;
+    box-shadow: 0 4px 15px rgba(255, 142, 60, 0.3);
+}
+
+.btnReject:hover {
+    background: #ea580c;
+    transform: translateY(-2px);
+}
