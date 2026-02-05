@@ -5,8 +5,8 @@ import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import styles from "./page.module.css";
 import { Mail, Phone, Calendar, MapPin, Clock, CheckCircle, Eye, Archive, FileText, MessageSquare } from "lucide-react";
-import RequestDecisionModal from "@/components/landlord/RequestDecisionModal";
-import CreateLeaseModal from "@/components/landlord/CreateLeaseModal";
+import RequestDecisionModal from "../../../components/landlord/RequestDecisionModal";
+import CreateLeaseModal from "../../../components/landlord/CreateLeaseModal";
 
 type Inquiry = {
     id: string;
@@ -128,9 +128,9 @@ export default function InquiriesPage() {
             .from('conversations')
             .select('id')
             .eq('listing_id', inquiry.listing_id)
-            .eq('tenant_id', inquiry.user_id)
-            .eq('landlord_id', user.id)
-            .single();
+            .or(`participant1_id.eq.${user.id},participant2_id.eq.${user.id}`)
+            .or(`participant1_id.eq.${inquiry.user_id},participant2_id.eq.${inquiry.user_id}`)
+            .maybeSingle(); // Use maybeSingle to handle 0 or 1 result gracefully
 
         // If not, create one
         if (!conversation) {
@@ -138,8 +138,8 @@ export default function InquiriesPage() {
                 .from('conversations')
                 .insert({
                     listing_id: inquiry.listing_id,
-                    tenant_id: inquiry.user_id,
-                    landlord_id: user.id
+                    participant1_id: user.id,
+                    participant2_id: inquiry.user_id
                 })
                 .select()
                 .single();

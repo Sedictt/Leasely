@@ -23,7 +23,8 @@ import {
     Home,
     UserCheck,
     BadgeDollarSign,
-    LifeBuoy
+    LifeBuoy,
+    MessageSquare
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -140,6 +141,12 @@ export default function Sidebar({ inquiryCount }: { inquiryCount?: number }) {
                         href="/landlord/inquiries"
                         active={isActive("/landlord/inquiries")}
                         badge={countToDisplay}
+                    />
+                    <NavItem
+                        icon={<MessageSquare size={20} />}
+                        label="Messages"
+                        href="/landlord/messages"
+                        active={isActive("/landlord/messages")}
                     />
                 </NavSection>
 

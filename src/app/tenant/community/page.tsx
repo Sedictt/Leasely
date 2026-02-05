@@ -10,7 +10,9 @@ import {
     CheckCircle,
     User,
     MoreVertical,
-    Search
+    Search,
+    Users,
+    ArrowLeft
 } from "lucide-react";
 import styles from "./community.module.css";
 import { useRouter } from "next/navigation";
@@ -35,13 +37,22 @@ type Message = {
     created_at: string;
 };
 
+type Neighbor = {
+    unit_number: string;
+    tenant_name: string;
+    tenant_id: string;
+    tenant_avatar: string | null;
+};
+
 export default function CommunityPage() {
+    const [view, setView] = useState<'complaints' | 'neighbors'>('complaints');
     const [complaints, setComplaints] = useState<Complaint[]>([]);
     const [activeComplaint, setActiveComplaint] = useState<Complaint | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState("");
     const [user, setUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [neighbors, setNeighbors] = useState<Neighbor[]>([]);
 
     // Create Modal State
     const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -90,8 +101,7 @@ export default function CommunityPage() {
 
         if (complaintsData) setComplaints(complaintsData);
 
-        // Fetch Units for dropdown (same property)
-        // 1. Get my current property
+        // Fetch My Property Info to get Neighbors
         const { data: leaseData } = await supabase
             .from('leases')
             .select('unit_id, units(property_id)')
@@ -99,10 +109,10 @@ export default function CommunityPage() {
             .eq('status', 'active')
             .single();
 
-        // Fix for TS error and safe access
         const unitsData = leaseData?.units as any;
 
-        if (unitsData?.property_id) {
+        if (leaseData && unitsData?.property_id) {
+            // 1. Fetch Units for dropdown (same property)
             const { data: propertyUnits } = await supabase
                 .from('units')
                 .select('id, unit_number')
@@ -110,6 +120,36 @@ export default function CommunityPage() {
                 .neq('id', leaseData.unit_id); // Exclude my own unit
 
             if (propertyUnits) setUnits(propertyUnits);
+
+            // 2. Fetch Neighbors (Active leases in other units of same property)
+            // We need to find leases where unit.property_id = my_property_id AND tenant != me
+            const { data: neighborLeases } = await supabase
+                .from('leases')
+                .select(`
+                    tenant_id,
+                    units!inner (
+                        unit_number,
+                        property_id
+                    ),
+                    profiles:tenant_id (
+                        full_name,
+                        avatar_url,
+                        id
+                    )
+                `)
+                .eq('units.property_id', unitsData.property_id)
+                .eq('status', 'active')
+                .neq('tenant_id', user.id);
+
+            if (neighborLeases) {
+                const formattedNeighbors: Neighbor[] = neighborLeases.map((l: any) => ({
+                    unit_number: l.units.unit_number,
+                    tenant_name: l.profiles?.full_name || 'Unknown',
+                    tenant_id: l.profiles?.id,
+                    tenant_avatar: l.profiles?.avatar_url
+                })).filter((n: Neighbor) => n.tenant_id); // Ensure we have a tenant ID
+                setNeighbors(formattedNeighbors);
+            }
         }
 
         setLoading(false);
@@ -142,12 +182,41 @@ export default function CommunityPage() {
         }
     };
 
+    const handleDirectMessage = async (neighborId: string) => {
+        if (!user) return;
+
+        // Check for existing conversation
+        let { data: conversation } = await supabase
+            .from('conversations')
+            .select('id')
+            .or(`participant1_id.eq.${user.id},participant2_id.eq.${user.id}`)
+            .or(`participant1_id.eq.${neighborId},participant2_id.eq.${neighborId}`)
+            .maybeSingle();
+
+        if (!conversation) {
+            // Create new
+            const { data: newConv, error } = await supabase
+                .from('conversations')
+                .insert({
+                    participant1_id: user.id,
+                    participant2_id: neighborId,
+                    listing_id: null
+                })
+                .select()
+                .single();
+
+            if (!error && newConv) conversation = newConv;
+        }
+
+        if (conversation) {
+            router.push(`/tenant/messages?id=${conversation.id}`);
+        }
+    };
+
     const handleCreateComplaint = async () => {
         if (!user || !formData.unit_id || !formData.description) return;
 
         // Get property ID first (reuse logic or fetch again)
-        // Simplified: We need the property_id for the insert
-        // We know unit -> property relation
         const { data: unitData } = await supabase
             .from('units')
             .select('property_id')
@@ -196,10 +265,7 @@ export default function CommunityPage() {
             .eq('id', activeComplaint.id);
 
         if (!error) {
-            // Refresh local state
             setActiveComplaint({ ...activeComplaint, status: 'escalated' });
-
-            // Add system message
             await supabase.from('complaint_messages').insert({
                 complaint_id: activeComplaint.id,
                 sender_id: user.id,
@@ -219,7 +285,6 @@ export default function CommunityPage() {
 
         if (!error) {
             setActiveComplaint({ ...activeComplaint, status: 'resolved' });
-            // Add system message
             await supabase.from('complaint_messages').insert({
                 complaint_id: activeComplaint.id,
                 sender_id: user.id,
@@ -234,115 +299,228 @@ export default function CommunityPage() {
     return (
         <div className={styles.container}>
             <div className={styles.header}>
-                <h1 className={styles.title}>Neighbors & Issue Resolution</h1>
-                <p className={styles.subtitle}>Connect with neighbors to resolve issues or reach out to management</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <button
+                        className={styles.backBtn}
+                        onClick={() => router.push('/tenant/dashboard')}
+                        style={{ border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                    >
+                        <ArrowLeft size={24} color="#64748b" />
+                    </button>
+                    <div>
+                        <h1 className={styles.title}>Community & Resolution</h1>
+                        <p className={styles.subtitle}>Connect with neighbors and resolve issues.</p>
+                    </div>
+                </div>
             </div>
 
             <div className={styles.grid}>
-                {/* Sidebar */}
+                {/* Sidebar / List */}
                 <div className={styles.sidebar}>
                     <div className={styles.sidebarHeader}>
-                        <h3 className={styles.sidebarTitle}>Active Issues</h3>
-                        <button className={styles.newBtn} onClick={() => setIsCreateOpen(true)}>
-                            <Plus size={16} /> Resolve New Issue
-                        </button>
+                        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                            <button
+                                className={`${styles.tabBtn} ${view === 'complaints' ? styles.activeTab : ''}`}
+                                onClick={() => setView('complaints')}
+                                style={{
+                                    border: 'none',
+                                    background: 'none',
+                                    fontWeight: view === 'complaints' ? 700 : 400,
+                                    color: view === 'complaints' ? '#0f172a' : '#64748b',
+                                    paddingBottom: '0.25rem',
+                                    borderBottom: view === 'complaints' ? '2px solid #0f172a' : 'none',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                Claims
+                            </button>
+                            <button
+                                className={`${styles.tabBtn} ${view === 'neighbors' ? styles.activeTab : ''}`}
+                                onClick={() => setView('neighbors')}
+                                style={{
+                                    border: 'none',
+                                    background: 'none',
+                                    fontWeight: view === 'neighbors' ? 700 : 400,
+                                    color: view === 'neighbors' ? '#0f172a' : '#64748b',
+                                    paddingBottom: '0.25rem',
+                                    borderBottom: view === 'neighbors' ? '2px solid #0f172a' : 'none',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                Neighbors
+                            </button>
+                        </div>
+
+                        {view === 'complaints' && (
+                            <button className={styles.newBtn} onClick={() => setIsCreateOpen(true)}>
+                                <Plus size={16} /> Resolve New Issue
+                            </button>
+                        )}
                     </div>
+
                     <div className={styles.complaintList}>
-                        {complaints.length === 0 ? (
-                            <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
-                                No active issues
-                            </div>
-                        ) : (
-                            complaints.map(complaint => (
-                                <div
-                                    key={complaint.id}
-                                    className={`${styles.complaintItem} ${activeComplaint?.id === complaint.id ? styles.active : ''}`}
-                                    onClick={() => setActiveComplaint(complaint)}
-                                >
-                                    <div className={styles.itemHeader}>
-                                        <span className={styles.categoryBadge}>{complaint.category}</span>
-                                        <span className={styles.time}>
-                                            {new Date(complaint.created_at).toLocaleDateString()}
-                                        </span>
-                                    </div>
-                                    <span className={styles.itemTitle}>
-                                        Unit {complaint.respondent_unit?.unit_number}
-                                    </span>
-                                    <p className={styles.itemPreview}>{complaint.description}</p>
+                        {view === 'complaints' ? (
+                            complaints.length === 0 ? (
+                                <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
+                                    No active issues
                                 </div>
-                            ))
+                            ) : (
+                                complaints.map(complaint => (
+                                    <div
+                                        key={complaint.id}
+                                        className={`${styles.complaintItem} ${activeComplaint?.id === complaint.id ? styles.active : ''}`}
+                                        onClick={() => setActiveComplaint(complaint)}
+                                    >
+                                        <div className={styles.itemHeader}>
+                                            <span className={styles.categoryBadge}>{complaint.category}</span>
+                                            <span className={styles.time}>
+                                                {new Date(complaint.created_at).toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                        <span className={styles.itemTitle}>
+                                            Unit {complaint.respondent_unit?.unit_number}
+                                        </span>
+                                        <p className={styles.itemPreview}>{complaint.description}</p>
+                                    </div>
+                                ))
+                            )
+                        ) : (
+                            // Neighbors List
+                            neighbors.length === 0 ? (
+                                <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
+                                    No neighbors found
+                                </div>
+                            ) : (
+                                neighbors.map(neighbor => (
+                                    <div
+                                        key={neighbor.tenant_id}
+                                        className={styles.complaintItem}
+                                        style={{ cursor: 'default' }}
+                                    >
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                            <div style={{
+                                                width: '40px', height: '40px', background: '#e0e7ff', color: '#4f46e5',
+                                                borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold'
+                                            }}>
+                                                {neighbor.tenant_name.charAt(0)}
+                                            </div>
+                                            <div>
+                                                <div style={{ fontWeight: 600 }}>{neighbor.tenant_name}</div>
+                                                <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Unit {neighbor.unit_number}</div>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDirectMessage(neighbor.tenant_id);
+                                            }}
+                                            style={{
+                                                marginTop: '0.75rem',
+                                                width: '100%',
+                                                padding: '0.5rem',
+                                                background: 'white',
+                                                border: '1px solid #e2e8f0',
+                                                borderRadius: '0.375rem',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '0.5rem',
+                                                fontWeight: 500,
+                                                color: '#0f172a'
+                                            }}
+                                        >
+                                            <MessageSquare size={16} /> Send Message
+                                        </button>
+                                    </div>
+                                ))
+                            )
                         )}
                     </div>
                 </div>
 
-                {/* Main Chat Area */}
-                <div className={styles.main}>
-                    {!activeComplaint ? (
+                {/* Main Content Area */}
+                {view === 'complaints' ? (
+                    <div className={styles.main}>
+                        {!activeComplaint ? (
+                            <div className={styles.emptyState}>
+                                <MessageSquare size={48} className={styles.emptyIcon} />
+                                <h3>Select an issue to view details</h3>
+                            </div>
+                        ) : (
+                            <>
+                                <div className={styles.chatHeader}>
+                                    <div className={styles.chatInfo}>
+                                        <h2>Unit {activeComplaint.respondent_unit?.unit_number} - {activeComplaint.category}</h2>
+                                        <div className={styles.chatStatus}>
+                                            Status:
+                                            <span style={{
+                                                fontWeight: 700,
+                                                color: activeComplaint.status === 'escalated' ? '#ef4444' :
+                                                    activeComplaint.status === 'resolved' ? '#16a34a' : '#3b82f6'
+                                            }}>
+                                                {activeComplaint.status.toUpperCase()}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className={styles.actions}>
+                                        {activeComplaint.status !== 'resolved' && (
+                                            <button className={`${styles.actionBtn} ${styles.resolveBtn}`} onClick={handleResolve}>
+                                                <CheckCircle size={16} style={{ marginRight: 4 }} /> Mark Resolved
+                                            </button>
+                                        )}
+                                        {activeComplaint.status === 'open' && (
+                                            <button className={`${styles.actionBtn} ${styles.escalateBtn}`} onClick={handleEscalate}>
+                                                <AlertTriangle size={16} style={{ marginRight: 4 }} /> Escalate to Landlord
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className={styles.messagesArea}>
+                                    {messages.map(msg => (
+                                        <div
+                                            key={msg.id}
+                                            className={`${styles.message} ${msg.sender_id === user?.id ? styles.ownMessage : styles.theirMessage}`}
+                                        >
+                                            {msg.content}
+                                            <span className={styles.messageMeta}>
+                                                {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            </span>
+                                        </div>
+                                    ))}
+                                    <div ref={messagesEndRef} />
+                                </div>
+
+                                <div className={styles.inputArea}>
+                                    <input
+                                        type="text"
+                                        className={styles.input}
+                                        placeholder="Type a message..."
+                                        value={newMessage}
+                                        onChange={(e) => setNewMessage(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                                    />
+                                    <button className={styles.sendBtn} onClick={handleSendMessage}>
+                                        <Send size={20} />
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                ) : (
+                    // Neighbors Placeholder View
+                    <div className={styles.main}>
                         <div className={styles.emptyState}>
-                            <MessageSquare size={48} className={styles.emptyIcon} />
-                            <h3>Select an issue to view details</h3>
+                            <Users size={48} className={styles.emptyIcon} style={{ background: '#ecfdf5', color: '#059669' }} />
+                            <h3>Connect with Neighbours</h3>
+                            <p style={{ maxWidth: '400px', margin: '0 auto', color: '#64748b' }}>
+                                Find your neighbors in the sidebar to start a conversation.
+                                Getting to know your community makes living here even better!
+                            </p>
                         </div>
-                    ) : (
-                        <>
-                            <div className={styles.chatHeader}>
-                                <div className={styles.chatInfo}>
-                                    <h2>Unit {activeComplaint.respondent_unit?.unit_number} - {activeComplaint.category}</h2>
-                                    <div className={styles.chatStatus}>
-                                        Status:
-                                        <span style={{
-                                            fontWeight: 700,
-                                            color: activeComplaint.status === 'escalated' ? '#ef4444' :
-                                                activeComplaint.status === 'resolved' ? '#16a34a' : '#3b82f6'
-                                        }}>
-                                            {activeComplaint.status.toUpperCase()}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className={styles.actions}>
-                                    {activeComplaint.status !== 'resolved' && (
-                                        <button className={`${styles.actionBtn} ${styles.resolveBtn}`} onClick={handleResolve}>
-                                            <CheckCircle size={16} style={{ marginRight: 4 }} /> Mark Resolved
-                                        </button>
-                                    )}
-                                    {activeComplaint.status === 'open' && (
-                                        <button className={`${styles.actionBtn} ${styles.escalateBtn}`} onClick={handleEscalate}>
-                                            <AlertTriangle size={16} style={{ marginRight: 4 }} /> Escalate to Landlord
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className={styles.messagesArea}>
-                                {messages.map(msg => (
-                                    <div
-                                        key={msg.id}
-                                        className={`${styles.message} ${msg.sender_id === user?.id ? styles.ownMessage : styles.theirMessage}`}
-                                    >
-                                        {msg.content}
-                                        <span className={styles.messageMeta}>
-                                            {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        </span>
-                                    </div>
-                                ))}
-                                <div ref={messagesEndRef} />
-                            </div>
-
-                            <div className={styles.inputArea}>
-                                <input
-                                    type="text"
-                                    className={styles.input}
-                                    placeholder="Type a message..."
-                                    value={newMessage}
-                                    onChange={(e) => setNewMessage(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                                />
-                                <button className={styles.sendBtn} onClick={handleSendMessage}>
-                                    <Send size={20} />
-                                </button>
-                            </div>
-                        </>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
 
             {/* Create Complaint Modal */}

@@ -17,7 +17,8 @@ import {
     FileSignature,
     Bell,
     ChevronRight,
-    MapPin
+    MapPin,
+    Users
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -370,15 +371,15 @@ export default function TenantDashboard() {
                             </button>
                             <button className={styles.actionBtn} onClick={() => router.push('/tenant/community')}>
                                 <div className={`${styles.actionBtnIcon} ${styles.orangeIcon}`}>
+                                    <Users size={20} />
+                                </div>
+                                <span className={styles.actionBtnLabel}>Community</span>
+                            </button>
+                            <button className={styles.actionBtn} onClick={() => router.push('/tenant/messages')}>
+                                <div className={`${styles.actionBtnIcon} ${styles.blueIcon}`}>
                                     <MessageSquare size={20} />
                                 </div>
-                                <span className={styles.actionBtnLabel}>Neighbors</span>
-                            </button>
-                            <button className={styles.actionBtn} onClick={() => router.push('/search')}>
-                                <div className={`${styles.actionBtnIcon} ${styles.blueIcon}`}>
-                                    <Home size={20} />
-                                </div>
-                                <span className={styles.actionBtnLabel}>Browse</span>
+                                <span className={styles.actionBtnLabel}>Messages</span>
                             </button>
                         </div>
                     </div>

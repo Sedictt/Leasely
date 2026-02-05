@@ -2,8 +2,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Users, FileSignature } from "lucide-react";
+import { Loader2, Users, FileSignature, MessageSquare } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
 import styles from "./tenants.module.css";
 import LandlordSigningModal from "@/components/landlord/LandlordSigningModal";
 
@@ -71,6 +72,48 @@ export default function TenantsPage() {
         fetchTenants();
     }, [fetchTenants]);
 
+    const router = useRouter();
+
+    const handleMessage = async (lease: Lease) => {
+        if (!lease.profiles?.id) return;
+
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Check for existing conversation
+        let { data: conversation } = await supabase
+            .from('conversations')
+            .select('id')
+            .or(`participant1_id.eq.${user.id},participant2_id.eq.${user.id}`)
+            .or(`participant1_id.eq.${lease.profiles.id},participant2_id.eq.${lease.profiles.id}`)
+            .maybeSingle();
+
+        if (!conversation) {
+            // Create new conversation
+            const { data: newConv, error } = await supabase
+                .from('conversations')
+                .insert({
+                    participant1_id: user.id,
+                    participant2_id: lease.profiles.id,
+                    // We can link it to the property if known, but optional
+                    listing_id: null
+                })
+                .select()
+                .single();
+
+            if (error) {
+                console.error("Error creating conversation:", error);
+                alert("Failed to start chat.");
+                return;
+            }
+            conversation = newConv;
+        }
+
+        if (conversation) {
+            router.push(`/landlord/messages?id=${conversation.id}`);
+        }
+    };
+
     if (isLoading) {
         return (
             <div className={styles.loadingState}>
@@ -101,7 +144,7 @@ export default function TenantsPage() {
                             <th>Property / Unit</th>
                             <th>Lease Period</th>
                             <th>Monthly Rent</th>
-                            <th>Status</th>
+                            <th>Status/Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -141,23 +184,34 @@ export default function TenantsPage() {
                                         ₱{lease.rent_amount.toLocaleString()}
                                     </td>
                                     <td>
-                                        {lease.status === 'pending_landlord' ? (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            {lease.status === 'pending_landlord' ? (
+                                                <button
+                                                    className={styles.actionBtn}
+                                                    style={{ background: '#0ea5e9', color: 'white', padding: '0.4rem 0.8rem', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                                                    onClick={() => {
+                                                        setSelectedLease(lease);
+                                                        setIsSignModalOpen(true);
+                                                    }}
+                                                >
+                                                    <FileSignature size={14} />
+                                                    Countersign
+                                                </button>
+                                            ) : (
+                                                <span className={styles.statusBadge} style={{ background: '#dcfce7', color: '#166534', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
+                                                    Active
+                                                </span>
+                                            )}
+
                                             <button
                                                 className={styles.actionBtn}
-                                                style={{ background: '#0ea5e9', color: 'white', padding: '0.4rem 0.8rem', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
-                                                onClick={() => {
-                                                    setSelectedLease(lease);
-                                                    setIsSignModalOpen(true);
-                                                }}
+                                                style={{ background: 'white', border: '1px solid #e2e8f0', color: '#64748b', padding: '0.4rem', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                                onClick={() => handleMessage(lease)}
+                                                title="Send Message"
                                             >
-                                                <FileSignature size={14} />
-                                                Countersign
+                                                <MessageSquare size={16} />
                                             </button>
-                                        ) : (
-                                            <span className={styles.statusBadge} style={{ background: '#dcfce7', color: '#166534' }}>
-                                                Active
-                                            </span>
-                                        )}
+                                        </div>
                                     </td>
                                 </tr>
                             ))
@@ -170,7 +224,7 @@ export default function TenantsPage() {
                 <LandlordSigningModal
                     isOpen={isSignModalOpen}
                     onClose={() => setIsSignModalOpen(false)}
-                    onSign={async (signatureDataUrl) => {
+                    onSign={async (signatureDataUrl: string) => {
                         const { data: { user } } = await supabase.auth.getUser();
                         if (!user) return;
 
@@ -190,7 +244,8 @@ export default function TenantsPage() {
                             if (updateError) throw updateError;
 
                             setIsSignModalOpen(false);
-                            fetchTenants();
+                            // Refresh logic here if possible, or reload
+                            window.location.reload();
                         } catch (err) {
                             console.error(err);
                             alert('Failed to sign lease');

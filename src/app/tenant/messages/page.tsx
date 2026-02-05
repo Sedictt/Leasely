@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import styles from './page.module.css';
-import { MessageSquare, Search, Send, ArrowLeft, MoreVertical, Phone, Mail } from 'lucide-react';
+import { MessageSquare, Search, Send, ArrowLeft, MoreVertical, Phone, Mail, Home } from 'lucide-react';
 
 type Profile = {
     id: string;
@@ -56,6 +56,7 @@ function MessagesContent() {
                 setCurrentUser(user);
                 await fetchConversations(user.id);
             } else {
+                router.push('/login');
                 setLoading(false);
             }
         };
@@ -87,7 +88,6 @@ function MessagesContent() {
 
             if (!error && data) {
                 setMessages(data);
-                // Mark as read (optional, can be done later)
             }
             setMsgLoading(false);
             scrollToBottom();
@@ -164,6 +164,7 @@ function MessagesContent() {
             setConversations(enrichedConvs);
         } else {
             setConversations(convs as any);
+            // Even if no profiles found, show the conversations (though names might be missing)
         }
         setLoading(false);
     };
@@ -174,9 +175,6 @@ function MessagesContent() {
 
         const msgContent = newMessage.trim();
         setNewMessage(''); // Optimistic clear
-
-        // Optimistic update
-        // (Skipping for simplicity, relying on realtime)
 
         const { error } = await supabase
             .from('messages')
@@ -216,13 +214,30 @@ function MessagesContent() {
             {/* Sidebar */}
             <div className={`${styles.sidebar} ${selectedConvId ? styles.hidden : ''} md:flex`}>
                 <div className={styles.sidebarHeader}>
-                    <h1 className={styles.title}>Messages</h1>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                        <h1 className={styles.title}>Messages</h1>
+                        <button
+                            onClick={() => router.push('/tenant/dashboard')}
+                            style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#64748b',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.25rem'
+                            }}
+                            title="Back to Dashboard"
+                        >
+                            <Home size={20} />
+                        </button>
+                    </div>
                     <div className={styles.searchBar}>
                         <Search className={styles.searchIcon} size={18} />
                         <input
                             type="text"
                             className={styles.searchInput}
-                            placeholder="Search messages..."
+                            placeholder="Search..."
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                         />
@@ -232,7 +247,9 @@ function MessagesContent() {
                 <div className={styles.conversationList}>
                     {filteredConversations.length === 0 ? (
                         <div style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>
-                            No conversations found
+                            <MessageSquare size={32} style={{ marginBottom: '0.5rem', opacity: 0.5 }} />
+                            <p>No conversations yet.</p>
+                            <p style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>Visit Community to message neighbors.</p>
                         </div>
                     ) : (
                         filteredConversations.map(conv => (
@@ -241,7 +258,7 @@ function MessagesContent() {
                                 className={`${styles.conversationCard} ${selectedConvId === conv.id ? styles.active : ''}`}
                                 onClick={() => {
                                     setSelectedConvId(conv.id);
-                                    router.push(`/landlord/messages?id=${conv.id}`);
+                                    router.push(`/tenant/messages?id=${conv.id}`);
                                 }}
                             >
                                 <div className={styles.avatar}>
@@ -256,11 +273,10 @@ function MessagesContent() {
                                         <span className={styles.name}>{conv.other_participant?.full_name || 'Unknown'}</span>
                                         <span className={styles.time}>{new Date(conv.updated_at).toLocaleDateString()}</span>
                                     </div>
-                                    {conv.listing && (
-                                        <div className={styles.listingTitle}>{conv.listing.title}</div>
-                                    )}
+                                    <div className={styles.listingTitle}>
+                                        {conv.listing?.title || 'Direct Message'}
+                                    </div>
                                     <div className={styles.lastMessage}>
-                                        {/* We could fetch last message snippet if we want */}
                                         Click to view chat
                                     </div>
                                 </div>
@@ -280,7 +296,7 @@ function MessagesContent() {
                                     className={styles.backButton}
                                     onClick={() => {
                                         setSelectedConvId(null);
-                                        router.push('/landlord/messages');
+                                        router.push('/tenant/messages');
                                     }}
                                 >
                                     <ArrowLeft size={24} />
@@ -288,13 +304,9 @@ function MessagesContent() {
                                 <div>
                                     <div className={styles.headerName}>{activeConversation.other_participant?.full_name}</div>
                                     <div className={styles.headerDetail}>
-                                        {activeConversation.listing?.title || 'General Inquiry'}
+                                        {activeConversation.listing?.title || 'Direct Message'}
                                     </div>
                                 </div>
-                            </div>
-                            {/* Actions */}
-                            <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                {/* Placeholder actions */}
                             </div>
                         </div>
 
@@ -303,7 +315,7 @@ function MessagesContent() {
                                 <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>Loading messages...</div>
                             ) : messages.length === 0 ? (
                                 <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
-                                    No messages yet. Start the conversation!
+                                    No messages yet. Say hello!
                                 </div>
                             ) : (
                                 messages.map(msg => {
@@ -365,9 +377,9 @@ function MessagesContent() {
     );
 }
 
-export default function MessagesPage() {
+export default function TenantMessagesPage() {
     return (
-        <Suspense fallback={<div className={styles.emptyState}>Loading messages...</div>}>
+        <Suspense fallback={<div>Loading...</div>}>
             <MessagesContent />
         </Suspense>
     );
