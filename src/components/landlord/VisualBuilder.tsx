@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { DndContext, useDraggable, useDroppable, DragEndEvent, DragStartEvent, DragMoveEvent, DragOverlay, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { autoUpdate, flip, offset, shift, size, useFloating } from '@floating-ui/react-dom';
 
 import { User, Plus, ArrowUpFromLine, Trash2 } from 'lucide-react';
 
@@ -584,7 +585,36 @@ function DraggableUnit({
     ) : null;
 
     const [isHovered, setIsHovered] = useState(false);
-    const showTooltip = readOnly && isHovered;
+    const [isTooltipVisible, setIsTooltipVisible] = useState(false);
+    const [preferredPlacement, setPreferredPlacement] = useState<'top' | 'bottom'>('top');
+    const openTimeoutRef = useRef<number | null>(null);
+    const closeTimeoutRef = useRef<number | null>(null);
+    const { refs, x, y, strategy, update, placement } = useFloating({
+        placement: preferredPlacement,
+        strategy: 'fixed',
+        middleware: [
+            offset(12),
+            flip({ padding: 8, fallbackPlacements: ['bottom', 'top', 'right', 'left'] }),
+            shift({ padding: 8 }),
+            size({
+                padding: 8,
+                apply({ availableWidth, availableHeight, elements }) {
+                    Object.assign(elements.floating.style, {
+                        width: `${Math.min(220, availableWidth)}px`,
+                        maxWidth: `${availableWidth}px`,
+                        maxHeight: `${availableHeight}px`
+                    });
+                }
+            })
+        ],
+        whileElementsMounted: autoUpdate
+    });
+
+    const basePlacement = placement.split('-')[0] as 'top' | 'bottom' | 'left' | 'right';
+    const showTooltip = readOnly && isTooltipVisible;
+    const showHoverGlow = isHovered && readOnly;
+    const showSelectGlow = isSelected;
+    const glowVariant: 'selected' | 'hover' | null = showSelectGlow ? 'selected' : showHoverGlow ? 'hover' : null;
     const tooltipTitle = unit.id === currentUserUnitId
         ? 'This is where you are'
         : unit.tenantName && unit.tenantName !== 'Resident'
@@ -614,28 +644,73 @@ function DraggableUnit({
         .map((part) => part[0].toUpperCase())
         .join('');
 
+    useEffect(() => {
+        if (!isHovered) return;
+        update();
+    }, [isHovered, update, preferredPlacement]);
+
+    useEffect(() => {
+        return () => {
+            if (openTimeoutRef.current) window.clearTimeout(openTimeoutRef.current);
+            if (closeTimeoutRef.current) window.clearTimeout(closeTimeoutRef.current);
+        };
+    }, []);
+
+    const openTooltip = () => {
+        if (closeTimeoutRef.current) {
+            window.clearTimeout(closeTimeoutRef.current);
+            closeTimeoutRef.current = null;
+        }
+        if (openTimeoutRef.current) {
+            window.clearTimeout(openTimeoutRef.current);
+            openTimeoutRef.current = null;
+        }
+        setPreferredPlacement(unit.gridY >= 9 ? 'bottom' : 'top');
+        setIsHovered(true);
+        openTimeoutRef.current = window.setTimeout(() => {
+            setIsTooltipVisible(true);
+            update();
+        }, 140);
+    };
+
+    const scheduleClose = () => {
+        if (openTimeoutRef.current) {
+            window.clearTimeout(openTimeoutRef.current);
+            openTimeoutRef.current = null;
+        }
+        if (closeTimeoutRef.current) {
+            window.clearTimeout(closeTimeoutRef.current);
+        }
+        closeTimeoutRef.current = window.setTimeout(() => {
+            setIsTooltipVisible(false);
+            setIsHovered(false);
+        }, 120);
+    };
+
     return (
         <div
-            ref={setNodeRef}
+            ref={(node) => {
+                setNodeRef(node);
+                refs.setReference(node);
+            }}
             style={{
                 position: 'absolute',
                 top: pixelY,
                 left: pixelX,
                 width,
                 height: UNIT_HEIGHT,
-                zIndex: isHovered ? 50 : 10,
+                zIndex: isHovered ? 70 : isSelected ? 65 : 10,
                 cursor: readOnly ? 'pointer' : 'grab',
                 boxSizing: 'border-box',
-                outline: isSelected ? '2px solid #60a5fa' : 'none',
-                outlineOffset: 2
+                outline: 'none'
             }}
             onClick={() => {
                 if (unit.type !== 'stairs') {
                     onUnitClick?.(unit.id);
                 }
             }}
-            onPointerEnter={() => setIsHovered(true)}
-            onPointerLeave={() => setIsHovered(false)}
+            onPointerEnter={openTooltip}
+            onPointerLeave={scheduleClose}
             {...(readOnly ? {} : listeners)}
             {...(readOnly ? {} : attributes)}
         >
@@ -700,8 +775,50 @@ function DraggableUnit({
                     borderTop: 'none',
                     boxShadow: 'inset 0 0 20px rgba(0,0,0,0.8)',
                     display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-                    padding: '8px'
+                    padding: '8px',
+                    overflow: 'hidden'
                 }}>
+                    {!isStairs && (
+                        <div
+                            style={{
+                                position: 'absolute',
+                                inset: 0,
+                                pointerEvents: 'none',
+                                opacity: isOccupied ? 0.9 : 0.65,
+                                mixBlendMode: 'screen',
+                                background:
+                                    'radial-gradient(ellipse at 50% 0%, rgba(251, 191, 36, 0.18) 0%, rgba(251, 191, 36, 0.06) 35%, rgba(251, 191, 36, 0) 70%),\
+                                     radial-gradient(ellipse at 50% 100%, rgba(99, 102, 241, 0.10) 0%, rgba(99, 102, 241, 0) 60%)'
+                            }}
+                        />
+                    )}
+                    {glowVariant && (
+                        <div
+                            style={{
+                                position: 'absolute',
+                                inset: 0,
+                                pointerEvents: 'none',
+                                boxShadow: glowVariant === 'selected'
+                                    ? 'inset 0 0 0 2px rgba(96, 165, 250, 0.55)'
+                                    : 'inset 0 0 0 2px rgba(37, 99, 235, 0.38)',
+                                opacity: glowVariant === 'selected' ? 1 : 0.95
+                            }}
+                        />
+                    )}
+                    {glowVariant && (
+                        <div
+                            style={{
+                                position: 'absolute',
+                                inset: 0,
+                                pointerEvents: 'none',
+                                opacity: glowVariant === 'selected' ? 1 : 0.85,
+                                mixBlendMode: 'screen',
+                                background: glowVariant === 'selected'
+                                    ? 'radial-gradient(circle at center, rgba(96, 165, 250, 0) 44%, rgba(96, 165, 250, 0.18) 72%, rgba(96, 165, 250, 0.32) 100%)'
+                                    : 'radial-gradient(circle at center, rgba(37, 99, 235, 0) 46%, rgba(37, 99, 235, 0.14) 74%, rgba(37, 99, 235, 0.24) 100%)'
+                            }}
+                        />
+                    )}
                     {/* Ambient Light */}
                     {lightCone}
 
@@ -791,127 +908,168 @@ function DraggableUnit({
                         </div>
                     )}
 
-                    {showTooltip && (
-                        <div style={{
-                            position: 'absolute',
-                            bottom: '100%',
-                            left: '50%',
-                            transform: 'translate(-50%, -12px)',
-                            background: '#f8fafc',
-                            color: '#0f172a',
-                            borderRadius: 16,
-                            border: '1px solid rgba(148, 163, 184, 0.35)',
-                            fontSize: '0.75rem',
-                            minWidth: 210,
-                            zIndex: 9999,
-                            boxShadow: '0 18px 35px rgba(15, 23, 42, 0.3)',
-                            pointerEvents: 'auto',
-                            overflow: 'hidden'
-                        }}>
-                            <div style={{
-                                height: 46,
-                                background: 'linear-gradient(135deg, #16a34a 0%, #0f766e 100%)'
-                            }} />
-                            <div style={{
-                                padding: '0 0.9rem 0.9rem',
-                                marginTop: -18,
-                                textAlign: 'center'
-                            }}>
-                                {showAvatar && (
-                                    unit.tenantAvatarUrl ? (
-                                        <div style={{
-                                            width: 48,
-                                            height: 48,
-                                            borderRadius: '50%',
-                                            overflow: 'hidden',
-                                            border: '3px solid #f8fafc',
-                                            boxShadow: '0 8px 16px rgba(15, 23, 42, 0.2)',
-                                            margin: '0 auto 0.4rem'
-                                        }}>
-                                            <img
-                                                src={unit.tenantAvatarUrl}
-                                                alt={unit.tenantName || 'Resident'}
-                                                style={{
-                                                    width: '100%',
-                                                    height: '100%',
-                                                    objectFit: 'cover'
-                                                }}
-                                            />
-                                        </div>
-                                    ) : (
-                                        <div style={{
-                                            width: 48,
-                                            height: 48,
-                                            borderRadius: '50%',
-                                            background: '#e0e7ff',
-                                            color: '#4338ca',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            fontWeight: 700,
-                                            fontSize: '0.75rem',
-                                            border: '3px solid #f8fafc',
-                                            boxShadow: '0 8px 16px rgba(15, 23, 42, 0.2)',
-                                            margin: '0 auto 0.4rem'
-                                        }}>
-                                            {tooltipInitials || 'R'}
-                                        </div>
-                                    )
-                                )}
-                                <div style={{ fontWeight: 700, fontSize: '0.85rem' }}>{tooltipTitle}</div>
-                                <div style={{ color: '#64748b', fontSize: '0.7rem' }}>{tooltipSubtitle}</div>
-                            </div>
-                            <div style={{
-                                borderTop: '1px solid rgba(148, 163, 184, 0.2)',
-                                padding: '0.6rem 0.8rem 0.75rem',
-                                display: 'grid',
-                                gridTemplateColumns: canMessage ? '1fr 1fr' : '1fr',
-                                gap: 8
-                            }}>
-                                <button
-                                    type="button"
-                                    onClick={(event) => {
-                                        event.stopPropagation();
-                                        if (unit.type !== 'stairs') {
-                                            onUnitClick?.(unit.id);
-                                        }
-                                    }}
+                    {typeof document !== 'undefined' && createPortal(
+                        <AnimatePresence>
+                            {showTooltip && (
+                                <motion.div
+                                    ref={refs.setFloating}
+                                    initial={{ opacity: 0, scale: 0.96, y: preferredPlacement === 'top' ? 6 : -6 }}
+                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                    exit={{ opacity: 0, scale: 0.94, y: preferredPlacement === 'top' ? 4 : -4 }}
+                                    transition={{ duration: 0.14, ease: 'easeOut' }}
                                     style={{
-                                        background: '#ffffff',
-                                        color: '#0f172a',
-                                        border: '1px solid rgba(148, 163, 184, 0.6)',
-                                        borderRadius: 999,
-                                        padding: '0.35rem 0.5rem',
-                                        fontSize: '0.65rem',
-                                        fontWeight: 700,
-                                        cursor: 'pointer'
+                                        position: strategy,
+                                        top: y ?? 0,
+                                        left: x ?? 0,
+                                        visibility: x == null || y == null ? 'hidden' : 'visible',
+                                        background: '#0f172a',
+                                        color: '#f8fafc',
+                                        borderRadius: 16,
+                                        border: '1px solid rgba(148, 163, 184, 0.25)',
+                                        fontSize: '0.75rem',
+                                        zIndex: 9999,
+                                        boxShadow: '0 18px 35px rgba(0, 0, 0, 0.55)',
+                                        pointerEvents: 'auto',
+                                        overflow: 'hidden',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        transformOrigin: basePlacement === 'top' ? 'bottom center' : basePlacement === 'bottom' ? 'top center' : basePlacement === 'left' ? 'center right' : 'center left'
                                     }}
+                                    onPointerEnter={openTooltip}
+                                    onPointerLeave={scheduleClose}
                                 >
-                                    View
-                                </button>
-                                {canMessage && (
-                                    <button
-                                        type="button"
-                                        onClick={(event) => {
-                                            event.stopPropagation();
-                                            onUnitMessageClick?.(unit.id);
-                                        }}
+                                    {/* Caret pointing back to hovered unit */}
+                                    <div
                                         style={{
-                                            background: '#16a34a',
-                                            color: 'white',
-                                            border: 'none',
-                                            borderRadius: 999,
-                                            padding: '0.35rem 0.5rem',
-                                            fontSize: '0.65rem',
-                                            fontWeight: 700,
-                                            cursor: 'pointer'
+                                            position: 'absolute',
+                                            width: 12,
+                                            height: 12,
+                                            background: '#0f172a',
+                                            border: '1px solid rgba(148, 163, 184, 0.25)',
+                                            transform: 'rotate(45deg)',
+                                            zIndex: -1,
+                                            ...(basePlacement === 'top'
+                                                ? { bottom: -6, left: '50%', marginLeft: -6 }
+                                                : basePlacement === 'bottom'
+                                                    ? { top: -6, left: '50%', marginLeft: -6 }
+                                                    : basePlacement === 'left'
+                                                        ? { right: -6, top: '50%', marginTop: -6 }
+                                                        : { left: -6, top: '50%', marginTop: -6 })
                                         }}
-                                    >
-                                        Message
-                                    </button>
-                                )}
-                            </div>
-                        </div>
+                                    />
+                                    <div style={{
+                                        height: 46,
+                                        background: 'linear-gradient(135deg, #1d4ed8 0%, #0f172a 100%)'
+                                    }} />
+                                    <div style={{
+                                        flex: 1,
+                                        minHeight: 0,
+                                        overflow: 'auto'
+                                    }}>
+                                        <div style={{
+                                            padding: '0 0.9rem 0.9rem',
+                                            marginTop: -18,
+                                            textAlign: 'center'
+                                        }}>
+                                            {showAvatar && (
+                                                unit.tenantAvatarUrl ? (
+                                                    <div style={{
+                                                        width: 48,
+                                                        height: 48,
+                                                        borderRadius: '50%',
+                                                        overflow: 'hidden',
+                                                        border: '3px solid #0f172a',
+                                                        boxShadow: '0 8px 16px rgba(15, 23, 42, 0.2)',
+                                                        margin: '0 auto 0.4rem'
+                                                    }}>
+                                                        <img
+                                                            src={unit.tenantAvatarUrl}
+                                                            alt={unit.tenantName || 'Resident'}
+                                                            style={{
+                                                                width: '100%',
+                                                                height: '100%',
+                                                                objectFit: 'cover'
+                                                            }}
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <div style={{
+                                                        width: 48,
+                                                        height: 48,
+                                                        borderRadius: '50%',
+                                                        background: 'rgba(99, 102, 241, 0.2)',
+                                                        color: '#c7d2fe',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        fontWeight: 700,
+                                                        fontSize: '0.75rem',
+                                                        border: '3px solid #0f172a',
+                                                        boxShadow: '0 8px 16px rgba(15, 23, 42, 0.2)',
+                                                        margin: '0 auto 0.4rem'
+                                                    }}>
+                                                        {tooltipInitials || 'R'}
+                                                    </div>
+                                                )
+                                            )}
+                                            <div style={{ fontWeight: 700, fontSize: '0.85rem' }}>{tooltipTitle}</div>
+                                            <div style={{ color: '#94a3b8', fontSize: '0.7rem' }}>{tooltipSubtitle}</div>
+                                        </div>
+                                        <div style={{
+                                            borderTop: '1px solid rgba(148, 163, 184, 0.2)',
+                                            padding: '0.6rem 0.8rem 0.75rem',
+                                            display: 'grid',
+                                            gridTemplateColumns: canMessage ? '1fr 1fr' : '1fr',
+                                            gap: 8
+                                        }}>
+                                            <button
+                                                type="button"
+                                                onClick={(event) => {
+                                                    event.stopPropagation();
+                                                    if (unit.type !== 'stairs') {
+                                                        onUnitClick?.(unit.id);
+                                                    }
+                                                }}
+                                                style={{
+                                                    background: '#0b1220',
+                                                    color: '#e2e8f0',
+                                                    border: '1px solid rgba(148, 163, 184, 0.35)',
+                                                    borderRadius: 999,
+                                                    padding: '0.35rem 0.5rem',
+                                                    fontSize: '0.65rem',
+                                                    fontWeight: 700,
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                View
+                                            </button>
+                                            {canMessage && (
+                                                <button
+                                                    type="button"
+                                                    onClick={(event) => {
+                                                        event.stopPropagation();
+                                                        onUnitMessageClick?.(unit.id);
+                                                    }}
+                                                    style={{
+                                                        background: '#2563eb',
+                                                        color: 'white',
+                                                        border: 'none',
+                                                        borderRadius: 999,
+                                                        padding: '0.35rem 0.5rem',
+                                                        fontSize: '0.65rem',
+                                                        fontWeight: 700,
+                                                        cursor: 'pointer'
+                                                    }}
+                                                >
+                                                    Message
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>,
+                        document.body
                     )}
                 </div>
 
