@@ -9,13 +9,18 @@ import {
     AlertTriangle,
     CheckCircle,
     User,
-    MoreVertical,
     Search,
     Users,
-    ArrowLeft
+    ArrowLeft,
+    Home,
+    Building,
+    MessageCircle,
+    Info
 } from "lucide-react";
 import styles from "./community.module.css";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 
 type Complaint = {
     id: string;
@@ -91,7 +96,7 @@ export default function CommunityPage() {
         setUser(user);
 
         // Fetch Complaints
-        const { data: complaintsData, error } = await supabase
+        const { data: complaintsData } = await supabase
             .from('tenant_complaints')
             .select(`
                 *,
@@ -294,208 +299,190 @@ export default function CommunityPage() {
         }
     };
 
-    if (loading) return <div className={styles.emptyState}>Loading community...</div>;
+    if (loading) return (
+        <div className={styles.emptyState}>
+            <div className={styles.loader} />
+            <p>Loading community hub...</p>
+        </div>
+    );
 
     return (
-        <div className={styles.container}>
-            <div className={styles.header}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <button
-                        className={styles.backBtn}
-                        onClick={() => router.push('/tenant/dashboard')}
-                        style={{ border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                    >
-                        <ArrowLeft size={24} color="#64748b" />
-                    </button>
-                    <div>
-                        <h1 className={styles.title}>Community & Resolution</h1>
-                        <p className={styles.subtitle}>Connect with neighbors and resolve issues.</p>
+        <main className={styles.page}>
+            {/* Top Navigation */}
+            <header className={styles.topBar}>
+                <div className={styles.topBarContent}>
+                    <Link href="/" className={styles.logoArea}>
+                        <div className={styles.logoIcon}>
+                            <Building size={18} />
+                        </div>
+                        <span>Tenant Platform</span>
+                    </Link>
+                    <div className={styles.navActions}>
+                        <Link href="/tenant/dashboard" className={styles.navLink}>
+                            <Home size={16} />
+                            <span>Dashboard</span>
+                        </Link>
                     </div>
                 </div>
-            </div>
+            </header>
 
-            <div className={styles.grid}>
-                {/* Sidebar / List */}
-                <div className={styles.sidebar}>
+            <div className={styles.shell}>
+                {/* Sidebar */}
+                <aside className={styles.sidebar}>
                     <div className={styles.sidebarHeader}>
-                        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                        <h2 className={styles.sidebarTitle}>Community Hub</h2>
+                        <div className={styles.tabGroup}>
                             <button
-                                className={`${styles.tabBtn} ${view === 'complaints' ? styles.activeTab : ''}`}
+                                className={`${styles.tabBtn} ${view === 'complaints' ? styles.active : ''}`}
                                 onClick={() => setView('complaints')}
-                                style={{
-                                    border: 'none',
-                                    background: 'none',
-                                    fontWeight: view === 'complaints' ? 700 : 400,
-                                    color: view === 'complaints' ? '#0f172a' : '#64748b',
-                                    paddingBottom: '0.25rem',
-                                    borderBottom: view === 'complaints' ? '2px solid #0f172a' : 'none',
-                                    cursor: 'pointer'
-                                }}
                             >
                                 Claims
                             </button>
                             <button
-                                className={`${styles.tabBtn} ${view === 'neighbors' ? styles.activeTab : ''}`}
+                                className={`${styles.tabBtn} ${view === 'neighbors' ? styles.active : ''}`}
                                 onClick={() => setView('neighbors')}
-                                style={{
-                                    border: 'none',
-                                    background: 'none',
-                                    fontWeight: view === 'neighbors' ? 700 : 400,
-                                    color: view === 'neighbors' ? '#0f172a' : '#64748b',
-                                    paddingBottom: '0.25rem',
-                                    borderBottom: view === 'neighbors' ? '2px solid #0f172a' : 'none',
-                                    cursor: 'pointer'
-                                }}
                             >
                                 Neighbors
                             </button>
                         </div>
-
                         {view === 'complaints' && (
                             <button className={styles.newBtn} onClick={() => setIsCreateOpen(true)}>
-                                <Plus size={16} /> Resolve New Issue
+                                <Plus size={18} /> New Resolution
                             </button>
                         )}
                     </div>
 
-                    <div className={styles.complaintList}>
+                    <div className={styles.listArea}>
                         {view === 'complaints' ? (
                             complaints.length === 0 ? (
-                                <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
-                                    No active issues
+                                <div className={styles.emptyState} style={{ padding: '4rem 1rem' }}>
+                                    <p>No active resolutions found.</p>
                                 </div>
                             ) : (
                                 complaints.map(complaint => (
                                     <div
                                         key={complaint.id}
-                                        className={`${styles.complaintItem} ${activeComplaint?.id === complaint.id ? styles.active : ''}`}
+                                        className={`${styles.cardItem} ${activeComplaint?.id === complaint.id ? styles.active : ''}`}
                                         onClick={() => setActiveComplaint(complaint)}
                                     >
-                                        <div className={styles.itemHeader}>
-                                            <span className={styles.categoryBadge}>{complaint.category}</span>
-                                            <span className={styles.time}>
+                                        <div className={styles.cardHeader}>
+                                            <span className={`${styles.badge} ${styles[complaint.category.toLowerCase()] || styles.other}`}>
+                                                {complaint.category}
+                                            </span>
+                                            <span className={styles.timestamp}>
                                                 {new Date(complaint.created_at).toLocaleDateString()}
                                             </span>
                                         </div>
-                                        <span className={styles.itemTitle}>
+                                        <span className={styles.cardTitle}>
                                             Unit {complaint.respondent_unit?.unit_number}
                                         </span>
-                                        <p className={styles.itemPreview}>{complaint.description}</p>
+                                        <p className={styles.cardPreview}>{complaint.description}</p>
                                     </div>
                                 ))
                             )
                         ) : (
-                            // Neighbors List
                             neighbors.length === 0 ? (
-                                <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
-                                    No neighbors found
+                                <div className={styles.emptyState}>
+                                    <p>No neighbors found.</p>
                                 </div>
                             ) : (
                                 neighbors.map(neighbor => (
                                     <div
                                         key={neighbor.tenant_id}
-                                        className={styles.complaintItem}
-                                        style={{ cursor: 'default' }}
+                                        className={styles.neighborItem}
                                     >
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                            <div style={{
-                                                width: '40px', height: '40px', background: '#e0e7ff', color: '#4f46e5',
-                                                borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold'
-                                            }}>
-                                                {neighbor.tenant_name.charAt(0)}
-                                            </div>
-                                            <div>
-                                                <div style={{ fontWeight: 600 }}>{neighbor.tenant_name}</div>
-                                                <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Unit {neighbor.unit_number}</div>
-                                            </div>
+                                        <div className={styles.neighborAvatar}>
+                                            {neighbor.tenant_name.charAt(0)}
+                                        </div>
+                                        <div className={styles.neighborInfo}>
+                                            <h4>{neighbor.tenant_name}</h4>
+                                            <p>Unit {neighbor.unit_number}</p>
                                         </div>
                                         <button
+                                            className={styles.messageBtn}
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 handleDirectMessage(neighbor.tenant_id);
                                             }}
-                                            style={{
-                                                marginTop: '0.75rem',
-                                                width: '100%',
-                                                padding: '0.5rem',
-                                                background: 'white',
-                                                border: '1px solid #e2e8f0',
-                                                borderRadius: '0.375rem',
-                                                cursor: 'pointer',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                gap: '0.5rem',
-                                                fontWeight: 500,
-                                                color: '#0f172a'
-                                            }}
+                                            title="Send Message"
                                         >
-                                            <MessageSquare size={16} /> Send Message
+                                            <MessageCircle size={20} />
                                         </button>
                                     </div>
                                 ))
                             )
                         )}
                     </div>
-                </div>
+                </aside>
 
-                {/* Main Content Area */}
-                {view === 'complaints' ? (
-                    <div className={styles.main}>
-                        {!activeComplaint ? (
+                {/* Main Content */}
+                <section className={styles.mainArea}>
+                    {view === 'complaints' ? (
+                        !activeComplaint ? (
                             <div className={styles.emptyState}>
-                                <MessageSquare size={48} className={styles.emptyIcon} />
-                                <h3>Select an issue to view details</h3>
+                                <div className={styles.emptyIconCircle}>
+                                    <Info size={32} />
+                                </div>
+                                <h3>Select a resolution ticket</h3>
+                                <p>View details, chat with neighbors, or escalate issues to your landlord.</p>
                             </div>
                         ) : (
                             <>
-                                <div className={styles.chatHeader}>
-                                    <div className={styles.chatInfo}>
-                                        <h2>Unit {activeComplaint.respondent_unit?.unit_number} - {activeComplaint.category}</h2>
-                                        <div className={styles.chatStatus}>
-                                            Status:
-                                            <span style={{
-                                                fontWeight: 700,
-                                                color: activeComplaint.status === 'escalated' ? '#ef4444' :
-                                                    activeComplaint.status === 'resolved' ? '#16a34a' : '#3b82f6'
+                                <header className={styles.detailHeader}>
+                                    <div className={styles.detailTitle}>
+                                        <h2>Unit {activeComplaint.respondent_unit?.unit_number}</h2>
+                                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
+                                            <span className={`${styles.badge} ${styles[activeComplaint.category.toLowerCase()] || styles.other}`}>
+                                                {activeComplaint.category}
+                                            </span>
+                                            <span className={styles.statusPill} style={{
+                                                background: activeComplaint.status === 'resolved' ? '#dcfce7' : activeComplaint.status === 'escalated' ? '#fee2e2' : '#e0e7ff',
+                                                color: activeComplaint.status === 'resolved' ? '#166534' : activeComplaint.status === 'escalated' ? '#991b1b' : '#3730a3'
                                             }}>
-                                                {activeComplaint.status.toUpperCase()}
+                                                {activeComplaint.status}
                                             </span>
                                         </div>
                                     </div>
-                                    <div className={styles.actions}>
+                                    <div className={styles.detailActions}>
                                         {activeComplaint.status !== 'resolved' && (
-                                            <button className={`${styles.actionBtn} ${styles.resolveBtn}`} onClick={handleResolve}>
-                                                <CheckCircle size={16} style={{ marginRight: 4 }} /> Mark Resolved
+                                            <button className={`${styles.actionBtn} ${styles.resolve}`} onClick={handleResolve}>
+                                                <CheckCircle size={18} /> Resolved
                                             </button>
                                         )}
                                         {activeComplaint.status === 'open' && (
-                                            <button className={`${styles.actionBtn} ${styles.escalateBtn}`} onClick={handleEscalate}>
-                                                <AlertTriangle size={16} style={{ marginRight: 4 }} /> Escalate to Landlord
+                                            <button className={`${styles.actionBtn} ${styles.escalate}`} onClick={handleEscalate}>
+                                                <AlertTriangle size={18} /> Escalate
                                             </button>
                                         )}
                                     </div>
-                                </div>
+                                </header>
 
-                                <div className={styles.messagesArea}>
-                                    {messages.map(msg => (
-                                        <div
-                                            key={msg.id}
-                                            className={`${styles.message} ${msg.sender_id === user?.id ? styles.ownMessage : styles.theirMessage}`}
-                                        >
-                                            {msg.content}
-                                            <span className={styles.messageMeta}>
-                                                {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                            </span>
-                                        </div>
-                                    ))}
+                                <div className={styles.messagesContainer}>
+                                    {messages.map((msg, i) => {
+                                        const isOwn = msg.sender_id === user?.id;
+                                        return (
+                                            <motion.div
+                                                key={msg.id}
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                className={`${styles.messageRow} ${isOwn ? styles.own : styles.their}`}
+                                            >
+                                                <div className={styles.bubble}>
+                                                    {msg.content}
+                                                </div>
+                                                <span className={styles.messageTime}>
+                                                    {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                            </motion.div>
+                                        );
+                                    })}
                                     <div ref={messagesEndRef} />
                                 </div>
 
-                                <div className={styles.inputArea}>
+                                <div className={styles.inputContainer}>
                                     <input
                                         type="text"
-                                        className={styles.input}
+                                        className={styles.inputField}
                                         placeholder="Type a message..."
                                         value={newMessage}
                                         onChange={(e) => setNewMessage(e.target.value)}
@@ -506,72 +493,83 @@ export default function CommunityPage() {
                                     </button>
                                 </div>
                             </>
-                        )}
-                    </div>
-                ) : (
-                    // Neighbors Placeholder View
-                    <div className={styles.main}>
+                        )
+                    ) : (
                         <div className={styles.emptyState}>
-                            <Users size={48} className={styles.emptyIcon} style={{ background: '#ecfdf5', color: '#059669' }} />
-                            <h3>Connect with Neighbours</h3>
-                            <p style={{ maxWidth: '400px', margin: '0 auto', color: '#64748b' }}>
-                                Find your neighbors in the sidebar to start a conversation.
-                                Getting to know your community makes living here even better!
-                            </p>
+                            <div className={styles.emptyIconCircle}>
+                                <Users size={32} />
+                            </div>
+                            <h3>Connect with Neighbors</h3>
+                            <p>Find neighbors in the list to start a private conversation or view their profile.</p>
                         </div>
-                    </div>
-                )}
+                    )}
+                </section>
             </div>
 
-            {/* Create Complaint Modal */}
-            {isCreateOpen && (
-                <div className={styles.overlay}>
-                    <div className={styles.modal}>
-                        <h2 style={{ marginTop: 0 }}>Resolve an Issue</h2>
-                        <div className={styles.formGroup}>
-                            <label className={styles.label}>Which unit is involved?</label>
-                            <select
-                                className={styles.select}
-                                value={formData.unit_id}
-                                onChange={e => setFormData({ ...formData, unit_id: e.target.value })}
-                            >
-                                <option value="">Select a unit...</option>
-                                {units.map(u => (
-                                    <option key={u.id} value={u.id}>Unit {u.unit_number}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className={styles.formGroup}>
-                            <label className={styles.label}>Category</label>
-                            <select
-                                className={styles.select}
-                                value={formData.category}
-                                onChange={e => setFormData({ ...formData, category: e.target.value })}
-                            >
-                                <option>Noise</option>
-                                <option>Cleanliness</option>
-                                <option>Parking</option>
-                                <option>Pet Issue</option>
-                                <option>Other</option>
-                            </select>
-                        </div>
-                        <div className={styles.formGroup}>
-                            <label className={styles.label}>Description</label>
-                            <textarea
-                                className={styles.textarea}
-                                rows={4}
-                                placeholder="Describe the matter kindly..."
-                                value={formData.description}
-                                onChange={e => setFormData({ ...formData, description: e.target.value })}
-                            />
-                        </div>
-                        <div className={styles.modalActions}>
-                            <button className={styles.cancelBtn} onClick={() => setIsCreateOpen(false)}>Cancel</button>
-                            <button className={styles.submitBtn} onClick={handleCreateComplaint}>Start Resolution</button>
-                        </div>
+            {/* Modal */}
+            <AnimatePresence>
+                {isCreateOpen && (
+                    <div className={styles.modalOverlay}>
+                        <motion.div
+                            className={styles.modalContent}
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                        >
+                            <h2 className={styles.modalTitle}>New Resolution Ticket</h2>
+
+                            <div className={styles.formField}>
+                                <label className={styles.label}>Which unit is involved?</label>
+                                <select
+                                    className={styles.select}
+                                    value={formData.unit_id}
+                                    onChange={e => setFormData({ ...formData, unit_id: e.target.value })}
+                                >
+                                    <option value="">Select a unit...</option>
+                                    {units.map(u => (
+                                        <option key={u.id} value={u.id}>Unit {u.unit_number}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className={styles.formField}>
+                                <label className={styles.label}>Category</label>
+                                <select
+                                    className={styles.select}
+                                    value={formData.category}
+                                    onChange={e => setFormData({ ...formData, category: e.target.value })}
+                                >
+                                    <option>Noise</option>
+                                    <option>Cleanliness</option>
+                                    <option>Parking</option>
+                                    <option>Pet Issue</option>
+                                    <option>Other</option>
+                                </select>
+                            </div>
+
+                            <div className={styles.formField}>
+                                <label className={styles.label}>Description</label>
+                                <textarea
+                                    className={styles.textarea}
+                                    rows={4}
+                                    placeholder="Describe the issue kindly..."
+                                    value={formData.description}
+                                    onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                />
+                            </div>
+
+                            <div className={styles.modalButtons}>
+                                <button className={styles.cancelButton} onClick={() => setIsCreateOpen(false)}>
+                                    Cancel
+                                </button>
+                                <button className={styles.submitButton} onClick={handleCreateComplaint}>
+                                    Start Resolution
+                                </button>
+                            </div>
+                        </motion.div>
                     </div>
-                </div>
-            )}
-        </div>
+                )}
+            </AnimatePresence>
+        </main>
     );
 }
