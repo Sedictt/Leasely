@@ -5,10 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/utils/supabase/client";
 import {
     User,
-    Building2,
     Mail,
     Phone,
-    MapPin,
     FileText,
     Upload,
     Check,
@@ -23,7 +21,11 @@ import {
     CheckCircle2,
     LogOut,
     LayoutDashboard,
-    Settings
+    Settings,
+    Building,
+    Wallet,
+    Bell,
+    CreditCard
 } from "lucide-react";
 import Link from "next/link";
 import styles from "./account.module.css";
@@ -110,243 +112,258 @@ export default function AccountPage() {
     if (isLoading) {
         return (
             <div className={styles.loadingContainer}>
-                <Loader2 size={48} className={styles.spinner} />
-                <p>Loading your account...</p>
+                <Loader2 size={48} className={styles.loader} />
+                <p>Loading your profile...</p>
             </div>
         );
     }
 
     if (!profile) return null;
 
+    const roleLabel = profile.role.charAt(0).toUpperCase() + profile.role.slice(1);
+    const avatarLetter = profile.full_name?.[0]?.toUpperCase() || profile.email[0].toUpperCase();
+
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: {
+                staggerChildren: 0.1
+            }
+        }
+    };
+
+    const itemVariants = {
+        hidden: { opacity: 0, y: 20 },
+        visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+    };
+
     return (
-        <main className={styles.container}>
-            <div className={styles.contentWrapper}>
-                <div className={styles.header}>
-                    <Link href="/" className={styles.backLink}>
-                        <Home size={16} />
-                        <span>Back to Home</span>
+        <main className={styles.page}>
+            <header className={styles.topBar}>
+                <div className={styles.topBarContent}>
+                    <Link href="/" className={styles.logoArea}>
+                        <div className={styles.logoIcon}>
+                            <Building size={18} />
+                        </div>
+                        <span>Tenant Platform</span>
                     </Link>
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5 }}
-                    >
-                        <h1 className={styles.title}>My Account</h1>
-                        <p className={styles.subtitle}>
-                            Manage your personal information, security settings, and platform preferences.
-                        </p>
-                    </motion.div>
+                    <div className={styles.navActions}>
+                        <Link href="/" className={styles.navLink}>
+                            <Home size={16} />
+                            <span>Return to Home</span>
+                        </Link>
+                    </div>
                 </div>
+            </header>
 
-                <div className={styles.grid}>
-                    {/* Left Column: Profile Card */}
-                    <motion.aside
-                        className={`${styles.card} ${styles.profileCard}`}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.5, delay: 0.1 }}
-                    >
-                        <div className={styles.avatarRing}>
-                            <div className={styles.avatar}>
-                                {profile.full_name?.[0]?.toUpperCase() || profile.email[0].toUpperCase()}
-                            </div>
-                        </div>
+            <div className={styles.shell}>
 
-                        <div className={styles.profileName}>
-                            <h2>{profile.full_name || "User"}</h2>
-                            <p>{profile.email}</p>
-                        </div>
 
-                        <div className={`${styles.roleBadge} ${styles[profile.role]}`}>
-                            {profile.role === "landlord" ? <Shield size={14} /> : <User size={14} />}
-                            <span>{profile.role.charAt(0).toUpperCase() + profile.role.slice(1)}</span>
-                        </div>
-
-                        <div className={styles.contactInfo}>
-                            <div className={styles.infoItem}>
-                                <Mail size={16} className={styles.infoIcon} />
-                                <span>{profile.email}</span>
-                            </div>
-                            {profile.phone && (
-                                <div className={styles.infoItem}>
-                                    <Phone size={16} className={styles.infoIcon} />
-                                    <span>{profile.phone}</span>
+                <motion.div
+                    className={styles.contentGrid}
+                    variants={containerVariants}
+                    initial="hidden"
+                    animate="visible"
+                >
+                    {/* Sidebar */}
+                    <aside className={styles.profileSidebar}>
+                        <motion.div className={`${styles.card} ${styles.profileCard}`} variants={itemVariants}>
+                            <div className={styles.avatarWrapper}>
+                                <div className={styles.avatar}>{avatarLetter}</div>
+                                <div className={styles.avatarBadge}>
+                                    {profile.role === 'landlord' ? <Shield size={16} /> : <User size={16} />}
                                 </div>
-                            )}
-                            <div className={styles.infoItem}>
-                                <Clock size={16} className={styles.infoIcon} />
-                                <span>Joined {new Date(profile.created_at).toLocaleDateString()}</span>
                             </div>
-                        </div>
 
-                        <button
-                            className={styles.logoutBtn}
-                            onClick={async () => {
-                                await supabase.auth.signOut();
-                                window.location.href = "/";
-                            }}
-                        >
-                            <LogOut size={18} />
-                            <span>Sign Out</span>
-                        </button>
-                    </motion.aside>
-
-                    {/* Right Column: Content */}
-                    <motion.div
-                        className={styles.mainContent}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: 0.2 }}
-                    >
-                        {/* Quick Actions */}
-                        <section>
-                            <h3 style={{ marginBottom: '1rem', color: 'var(--foreground)' }}>Quick Actions</h3>
-                            <div className={styles.actionsGrid}>
-                                {profile.role === "landlord" ? (
-                                    <>
-                                        <Link href="/landlord/dashboard" className={styles.actionCard}>
-                                            <div className={styles.actionContent}>
-                                                <div className={styles.actionIcon}>
-                                                    <LayoutDashboard size={20} />
-                                                </div>
-                                                <div className={styles.actionText}>
-                                                    <span className={styles.actionTitle}>Dashboard</span>
-                                                    <span className={styles.actionDesc}>Manage properties</span>
-                                                </div>
-                                            </div>
-                                            <ChevronRight size={18} className="text-gray-400" />
-                                        </Link>
-                                        <Link href="/landlord/settings" className={styles.actionCard}>
-                                            <div className={styles.actionContent}>
-                                                <div className={styles.actionIcon}>
-                                                    <Settings size={20} />
-                                                </div>
-                                                <div className={styles.actionText}>
-                                                    <span className={styles.actionTitle}>Settings</span>
-                                                    <span className={styles.actionDesc}>Platform preferences</span>
-                                                </div>
-                                            </div>
-                                            <ChevronRight size={18} className="text-gray-400" />
-                                        </Link>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Link href="/tenant/search" className={styles.actionCard}>
-                                            <div className={styles.actionContent}>
-                                                <div className={styles.actionIcon}>
-                                                    <Home size={20} />
-                                                </div>
-                                                <div className={styles.actionText}>
-                                                    <span className={styles.actionTitle}>Find Home</span>
-                                                    <span className={styles.actionDesc}>Browse listings</span>
-                                                </div>
-                                            </div>
-                                            <ChevronRight size={18} className="text-gray-400" />
-                                        </Link>
-                                        <Link href="/tenant/applications" className={styles.actionCard}>
-                                            <div className={styles.actionContent}>
-                                                <div className={styles.actionIcon}>
-                                                    <FileText size={20} />
-                                                </div>
-                                                <div className={styles.actionText}>
-                                                    <span className={styles.actionTitle}>Applications</span>
-                                                    <span className={styles.actionDesc}>View status</span>
-                                                </div>
-                                            </div>
-                                            <ChevronRight size={18} className="text-gray-400" />
-                                        </Link>
-                                    </>
-                                )}
+                            <div className={styles.userInfo}>
+                                <h2>{profile.full_name || "User"}</h2>
+                                <p>{profile.email}</p>
                             </div>
-                        </section>
 
-                        {/* Banner & Application Logic */}
-                        {profile.role === "landlord" ? (
-                            <section className={styles.card}>
-                                <div className={styles.statusHeader} style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#059669', marginBottom: 0 }}>
-                                    <CheckCircle2 size={24} />
-                                    <span>Verified Landlord Account</span>
+                            <div className={`${styles.roleTag} ${styles[profile.role]}`}>
+                                {roleLabel}
+                            </div>
+
+                            <div className={styles.divider} />
+
+                            <div className={styles.detailsList}>
+                                <div className={styles.detailItem}>
+                                    <Mail className={styles.detailIcon} />
+                                    <span>{profile.email}</span>
                                 </div>
-                                <div style={{ padding: '1.5rem 0 0 0' }}>
-                                    <p style={{ color: 'var(--muted-foreground)', marginBottom: '1.5rem' }}>
-                                        You have full access to list properties, manage tenants, and view financial reports.
-                                    </p>
+                                <div className={styles.detailItem}>
+                                    <Phone className={styles.detailIcon} />
+                                    <span>{profile.phone || "No phone added"}</span>
+                                </div>
+                                <div className={styles.detailItem}>
+                                    <Clock className={styles.detailIcon} />
+                                    <span>Joined {new Date(profile.created_at).toLocaleDateString()}</span>
+                                </div>
+                            </div>
+
+                            <button
+                                className={styles.logoutButton}
+                                onClick={async () => {
+                                    await supabase.auth.signOut();
+                                    window.location.href = "/";
+                                }}
+                            >
+                                <LogOut size={18} />
+                                <span>Sign Out</span>
+                            </button>
+                        </motion.div>
+                    </aside>
+
+                    {/* Main Content */}
+                    <div className={styles.mainContent}>
+                        {/* Status / Verification Section */}
+                        <motion.section variants={itemVariants}>
+                            {profile.role === "landlord" ? (
+                                <div className={styles.verificationBanner}>
+                                    <div className={styles.bannerContent}>
+                                        <h3>Verified Landlord</h3>
+                                        <p>You have full access to property management tools.</p>
+                                    </div>
                                     <Link href="/landlord/dashboard">
-                                        <button className={styles.submitBtn}>
-                                            Go to Dashboard <ArrowRight size={18} />
+                                        <button className={styles.bannerButton}>
+                                            Go to Dashboard
                                         </button>
                                     </Link>
                                 </div>
-                            </section>
-                        ) : (
-                            // Tenant View
-                            <>
-                                {!application && !showApplicationForm && (
-                                    <section className={`${styles.card} ${styles.promoCard}`}>
-                                        <div className={styles.promoContent}>
-                                            <div className={styles.promoText}>
-                                                <h2>Become a Landlord</h2>
-                                                <p>Unlock professional tools to manage your properties efficiently.</p>
-                                                <div className={styles.featureList}>
-                                                    <div className={styles.featureItem}>
-                                                        <CheckCircle2 size={18} className={styles.featureIcon} />
-                                                        List unlimited properties
-                                                    </div>
-                                                    <div className={styles.featureItem}>
-                                                        <CheckCircle2 size={18} className={styles.featureIcon} />
-                                                        Automated rent collection
-                                                    </div>
-                                                    <div className={styles.featureItem}>
-                                                        <CheckCircle2 size={18} className={styles.featureIcon} />
-                                                        Tenant screening & insights
+                            ) : (
+                                <>
+                                    {!application && !showApplicationForm && (
+                                        <div className={styles.upgradeCard}>
+                                            <div className={styles.upgradeAccent} />
+                                            <div className={styles.upgradeContent}>
+                                                <div className={styles.upgradeText}>
+                                                    <h3>Upgrade to Landlord</h3>
+                                                    <p>Unlock professional tools to manage your properties, track income, and find great tenants.</p>
+                                                    <div className={styles.featureChips}>
+                                                        <div className={styles.featureChip}><CheckCircle2 size={14} /> Property Management</div>
+                                                        <div className={styles.featureChip}><CheckCircle2 size={14} /> Financial Reports</div>
+                                                        <div className={styles.featureChip}><CheckCircle2 size={14} /> Tenant Screening</div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                            <div>
-                                                <button onClick={() => setShowApplicationForm(true)} className={styles.applyButton}>
+                                                <button onClick={() => setShowApplicationForm(true)} className={styles.upgradeButton}>
                                                     Start Application <ArrowRight size={18} />
                                                 </button>
                                             </div>
                                         </div>
-                                    </section>
+                                    )}
+
+                                    <AnimatePresence mode="wait">
+                                        {showApplicationForm && !application && (
+                                            <motion.div
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: "auto" }}
+                                                exit={{ opacity: 0, height: 0 }}
+                                            >
+                                                <div className={styles.formPanel}>
+                                                    <LandlordApplicationForm
+                                                        userId={profile.id}
+                                                        onSuccess={() => {
+                                                            setShowApplicationForm(false);
+                                                            fetchData();
+                                                        }}
+                                                        onCancel={() => setShowApplicationForm(false)}
+                                                    />
+                                                </div>
+                                            </motion.div>
+                                        )}
+
+                                        {application && (
+                                            <motion.div
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                            >
+                                                <div className={styles.sectionTitle}>
+                                                    <Shield size={20} />
+                                                    <span>Application Status</span>
+                                                </div>
+                                                <ApplicationStatus application={application} onReapply={() => setShowApplicationForm(true)} />
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </>
+                            )}
+                        </motion.section>
+
+                        {/* Quick Actions Grid */}
+                        <motion.section variants={itemVariants}>
+                            <div className={styles.sectionTitle}>
+                                <LayoutDashboard size={20} />
+                                <span>Quick Actions</span>
+                            </div>
+                            <div className={styles.actionsGrid}>
+                                {profile.role === "landlord" ? (
+                                    <>
+                                        <Link href="/landlord/dashboard" className={styles.actionCard}>
+                                            <div className={styles.actionIcon}><Building size={20} /></div>
+                                            <div className={styles.actionInfo}>
+                                                <h3>My Properties</h3>
+                                                <p>Manage listings & units</p>
+                                            </div>
+                                            <ChevronRight size={16} className={styles.arrowIcon} />
+                                        </Link>
+                                        <Link href="/landlord/finances" className={styles.actionCard}>
+                                            <div className={styles.actionIcon}><Wallet size={20} /></div>
+                                            <div className={styles.actionInfo}>
+                                                <h3>Finances</h3>
+                                                <p>Track rent & expenses</p>
+                                            </div>
+                                            <ChevronRight size={16} className={styles.arrowIcon} />
+                                        </Link>
+                                        <Link href="/landlord/settings" className={styles.actionCard}>
+                                            <div className={styles.actionIcon}><Settings size={20} /></div>
+                                            <div className={styles.actionInfo}>
+                                                <h3>Settings</h3>
+                                                <p>Configure preferences</p>
+                                            </div>
+                                            <ChevronRight size={16} className={styles.arrowIcon} />
+                                        </Link>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Link href="/tenant/dashboard" className={styles.actionCard}>
+                                            <div className={styles.actionIcon}><LayoutDashboard size={20} /></div>
+                                            <div className={styles.actionInfo}>
+                                                <h3>Dashboard</h3>
+                                                <p>View your rental overview</p>
+                                            </div>
+                                            <ChevronRight size={16} className={styles.arrowIcon} />
+                                        </Link>
+                                        <Link href="/tenant/search" className={styles.actionCard}>
+                                            <div className={styles.actionIcon}><Home size={20} /></div>
+                                            <div className={styles.actionInfo}>
+                                                <h3>Find a Home</h3>
+                                                <p>Browse available properties</p>
+                                            </div>
+                                            <ChevronRight size={16} className={styles.arrowIcon} />
+                                        </Link>
+                                        <Link href="/tenant/messages" className={styles.actionCard}>
+                                            <div className={styles.actionIcon}><Mail size={20} /></div>
+                                            <div className={styles.actionInfo}>
+                                                <h3>Messages</h3>
+                                                <p>Chat with landlords</p>
+                                            </div>
+                                            <ChevronRight size={16} className={styles.arrowIcon} />
+                                        </Link>
+                                    </>
                                 )}
-
-                                <AnimatePresence mode="wait">
-                                    {showApplicationForm && !application && (
-                                        <motion.div
-                                            initial={{ opacity: 0, height: 0 }}
-                                            animate={{ opacity: 1, height: "auto" }}
-                                            exit={{ opacity: 0, height: 0 }}
-                                            style={{ overflow: 'hidden' }}
-                                        >
-                                            <section className={styles.card}>
-                                                <LandlordApplicationForm
-                                                    userId={profile.id}
-                                                    onSuccess={() => {
-                                                        setShowApplicationForm(false);
-                                                        fetchData();
-                                                    }}
-                                                    onCancel={() => setShowApplicationForm(false)}
-                                                />
-                                            </section>
-                                        </motion.div>
-                                    )}
-
-                                    {application && (
-                                        <motion.section
-                                            className={styles.card}
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                        >
-                                            <h3>Application Status</h3>
-                                            <ApplicationStatus application={application} onReapply={() => setShowApplicationForm(true)} />
-                                        </motion.section>
-                                    )}
-                                </AnimatePresence>
-                            </>
-                        )}
-                    </motion.div>
-                </div>
+                                <Link href="/tenant/community" className={styles.actionCard}>
+                                    <div className={styles.actionIcon}><User size={20} /></div>
+                                    <div className={styles.actionInfo}>
+                                        <h3>Community</h3>
+                                        <p>Connect with neighbors</p>
+                                    </div>
+                                    <ChevronRight size={16} className={styles.arrowIcon} />
+                                </Link>
+                            </div>
+                        </motion.section>
+                    </div>
+                </motion.div>
             </div>
         </main>
     );
@@ -364,44 +381,33 @@ function ApplicationStatus({ application, onReapply }: { application: LandlordAp
     const Icon = config.icon;
 
     return (
-        <div style={{ marginTop: '1rem' }}>
-            <div className={styles.statusHeader} style={{ background: config.bg, color: config.color }}>
-                <Icon size={20} />
-                <span>{config.label}</span>
+        <div className={styles.statusCard}>
+            <div className={styles.statusIconWrapper} style={{ background: config.bg, color: config.color }}>
+                <Icon size={24} />
             </div>
-
-            <div className={styles.statusDetails}>
-                <div className={styles.detailItem}>
-                    <label>Submitted On</label>
-                    <span>{new Date(application.submitted_at).toLocaleDateString()}</span>
+            <div className={styles.statusContent}>
+                <h4>{config.label}</h4>
+                <div className={styles.statusMeta}>
+                    <p>Submitted on {new Date(application.submitted_at).toLocaleDateString()}</p>
+                    {application.business_name && <p>Business: {application.business_name}</p>}
                 </div>
-                {application.business_name && (
-                    <div className={styles.detailItem}>
-                        <label>Business Name</label>
-                        <span>{application.business_name}</span>
+
+                {application.status === "rejected" && (
+                    <div className={styles.statusRejection}>
+                        <strong>Reason for rejection:</strong>
+                        <p>{application.rejection_reason || "No specific reason provided."}</p>
+                        <button onClick={onReapply} className={styles.btnSecondary} style={{ marginTop: '0.5rem', fontSize: '0.85rem', padding: '0.5rem 1rem' }}>
+                            Update & Reapply
+                        </button>
                     </div>
                 )}
-                <div className={styles.detailItem}>
-                    <label>Address</label>
-                    <span>{application.business_address}</span>
-                </div>
+
+                {application.status === "pending" && (
+                    <p style={{ marginTop: '0.5rem', fontSize: '0.85rem' }}>
+                        Your application is being processed. This usually takes 24-48 hours.
+                    </p>
+                )}
             </div>
-
-            {application.status === "rejected" && (
-                <div className={styles.rejection}>
-                    <AlertCircle size={20} />
-                    <div>
-                        <strong>Reason for rejection</strong>
-                        <p style={{ marginTop: '0.25rem', fontSize: '0.9rem' }}>{application.rejection_reason || "No reason provided"}</p>
-                    </div>
-                </div>
-            )}
-
-            {application.status === "pending" && (
-                <p style={{ marginTop: '1rem', color: 'var(--muted-foreground)', fontSize: '0.9rem' }}>
-                    * We are currently reviewing your documents. This process typically takes 24-48 hours.
-                </p>
-            )}
         </div>
     );
 }
@@ -485,22 +491,23 @@ function LandlordApplicationForm({
 
     return (
         <form onSubmit={handleSubmit}>
-            <div className={styles.formHeader}>
-                <h3>Landlord Application</h3>
-                <p style={{ color: 'var(--muted-foreground)' }}>Please provide your business verify your identity.</p>
+            <div className={styles.sectionTitle} style={{ marginBottom: '1.5rem' }}>
+                <Shield size={24} />
+                <span>Landlord Application</span>
             </div>
 
             {error && (
-                <div style={{ background: '#fef2f2', color: '#ef4444', padding: '0.75rem', borderRadius: '0.5rem', marginBottom: '1.5rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <div style={{ background: '#fef2f2', color: '#ef4444', padding: '1rem', borderRadius: '0.75rem', marginBottom: '1.5rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                     <AlertCircle size={18} />
                     <span>{error}</span>
                 </div>
             )}
 
             <div className={styles.formGrid}>
-                <div className={styles.formGroup}>
+                <div className={styles.inputGroup}>
                     <label>Business Name (Optional)</label>
                     <input
+                        className={styles.input}
                         type="text"
                         placeholder="Company or Property Name"
                         value={formData.businessName}
@@ -508,9 +515,10 @@ function LandlordApplicationForm({
                     />
                 </div>
 
-                <div className={styles.formGroup}>
+                <div className={styles.inputGroup}>
                     <label>Contact Phone *</label>
                     <input
+                        className={styles.input}
                         type="tel"
                         placeholder="+63 900 000 0000"
                         value={formData.phone}
@@ -519,9 +527,10 @@ function LandlordApplicationForm({
                     />
                 </div>
 
-                <div className={`${styles.formGroup} ${styles.fullWidth}`}>
+                <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
                     <label>Business Address *</label>
                     <input
+                        className={styles.input}
                         type="text"
                         placeholder="Full business address"
                         value={formData.businessAddress}
@@ -530,64 +539,66 @@ function LandlordApplicationForm({
                     />
                 </div>
 
-                <div className={styles.formGroup}>
+                <div className={styles.inputGroup}>
                     <label>Government ID *</label>
-                    <div className={styles.fileUpload}>
+                    <div className={styles.fileUploadArea}>
                         <input
+                            className={styles.fileInput}
                             type="file"
                             accept="image/*,.pdf"
                             onChange={(e) => setGovernmentId(e.target.files?.[0] || null)}
                             required
                         />
-                        <div className={styles.uploadPlaceholder}>
+                        <div className={styles.uploadContent}>
                             {governmentId ? (
                                 <>
-                                    <Check size={18} color="var(--success)" />
-                                    <span style={{ color: 'var(--success)' }}>{governmentId.name}</span>
+                                    <CheckCircle2 size={32} color="var(--success)" />
+                                    <span style={{ color: 'var(--success)', fontWeight: 600 }}>{governmentId.name}</span>
                                 </>
                             ) : (
                                 <>
-                                    <Upload size={18} />
-                                    <span>Upload ID</span>
+                                    <Upload size={32} />
+                                    <span>Click to Upload ID</span>
+                                    <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>PDF or Image</span>
                                 </>
                             )}
                         </div>
                     </div>
-                    <span className={styles.hint}>Passport, Driver's License, or National ID</span>
                 </div>
 
-                <div className={styles.formGroup}>
-                    <label>Supporting Document (Optional)</label>
-                    <div className={styles.fileUpload}>
+                <div className={styles.inputGroup}>
+                    <label>Supporting Document</label>
+                    <div className={styles.fileUploadArea}>
                         <input
+                            className={styles.fileInput}
                             type="file"
                             accept="image/*,.pdf"
                             onChange={(e) => setPropertyDoc(e.target.files?.[0] || null)}
                         />
-                        <div className={styles.uploadPlaceholder}>
+                        <div className={styles.uploadContent}>
                             {propertyDoc ? (
                                 <>
-                                    <Check size={18} color="var(--success)" />
-                                    <span style={{ color: 'var(--success)' }}>{propertyDoc.name}</span>
+                                    <CheckCircle2 size={32} color="var(--success)" />
+                                    <span style={{ color: 'var(--success)', fontWeight: 600 }}>{propertyDoc.name}</span>
                                 </>
                             ) : (
                                 <>
-                                    <Upload size={18} />
-                                    <span>Upload Doc</span>
+                                    <FileText size={32} />
+                                    <span>Click to Upload Doc</span>
+                                    <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>Optional</span>
                                 </>
                             )}
                         </div>
                     </div>
-                    <span className={styles.hint}>Business Permit, Tax Declaration, etc.</span>
                 </div>
             </div>
 
-            <div className={styles.formActions}>
-                <button type="button" className={styles.cancelBtn} onClick={onCancel}>
+            <div className={styles.buttonGroup}>
+                <button type="button" className={styles.btnSecondary} onClick={onCancel}>
                     Cancel
                 </button>
-                <button type="submit" className={styles.submitBtn} disabled={isSubmitting}>
-                    {isSubmitting ? <Loader2 size={18} className={styles.spinner} /> : "Submit Application"}
+                <button type="submit" className={styles.btnPrimary} disabled={isSubmitting}>
+                    {isSubmitting ? <Loader2 size={18} className={styles.loader} /> : "Submit Application"}
                 </button>
             </div>
         </form>
